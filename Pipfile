@@ -1,0 +1,21 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+pytest = "==5.*"
+pytest-xdist = "==1.*"
+pytest-asyncio = "*"
+pylint = "==1.*"
+flake8 = "==3.7"
+ipdb = "*"
+ipython = "*"
+mypy = "*"
+
+[packages]
+motor = '>=2.0.0'
+pydantic = '>=1.*'
+
+[requires]
+python_version = "3.7"
