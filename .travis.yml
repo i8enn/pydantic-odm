@@ -32,7 +32,10 @@ jobs:
       python: 3.7
       name: 'Python: 3.7'
       script:
+        - docker-compose up -d
         - make test
+      after_script:
+        - docker-compose down
     - stage: build
       name: 'PyPI Build and Upload'
       python: 3.7
