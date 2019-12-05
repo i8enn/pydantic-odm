@@ -1,11 +1,12 @@
 .DEFAULT_GOAL := all
 isort = isort -rc pydantic-odm tests
-black = black -S -l 120 --target-version py37 pydantic-odm tests
+black = black -S -l 88 --target-version py37 pydantic_odm tests
 
 .PHONY: install
 install:
 	pip install -U pipenv
 	pipenv install --dev
+	pipenv run pip install -e .
 
 .PHONY: build-cython-trace
 build-cython-trace:
@@ -22,7 +23,7 @@ format:
 
 .PHONY: lint
 lint:
-	flake8 pydantic/ tests/
+	flake8 pydantic_odm/ tests/
 	$(isort) --check-only
 	$(black) --check
 
@@ -34,12 +35,11 @@ check-dist:
 
 .PHONY: mypy
 mypy:
-	mypy pydantic
+	mypy pydantic_odm
 
 .PHONY: test
 test:
-	pytest --cov=pydantic
-	@python tests/try_assert.py
+	pytest --cov=pydantic_odm
 
 .PHONY: testcov
 testcov: test
