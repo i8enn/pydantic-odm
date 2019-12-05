@@ -54,9 +54,8 @@ jobs:
       deploy:
         provider: pypi
         skip_cleanup: true
-        user: i8enn
-        password:
-          secure: 'pypi-AgEIcHlwaS5vcmcCJGY4NDI5MTJiLTJmZTItNDM5ZS05MTMyLWI5ZDZlMTNmMzUwZQACPXsicGVybWlzc2lvbnMiOiB7InByb2plY3RzIjogWyJweWRhbnRpYy1vZG0iXX0sICJ2ZXJzaW9uIjogMX0AAAYg369ZMQZaGQ6qpqY2SXjsAhOUlbTYvo-fihW59qZfQ-Q'
+        username: i8enn
+        password: 'pypi-AgEIcHlwaS5vcmcCJGY4NDI5MTJiLTJmZTItNDM5ZS05MTMyLWI5ZDZlMTNmMzUwZQACPXsicGVybWlzc2lvbnMiOiB7InByb2plY3RzIjogWyJweWRhbnRpYy1vZG0iXX0sICJ2ZXJzaW9uIjogMX0AAAYg369ZMQZaGQ6qpqY2SXjsAhOUlbTYvo-fihW59qZfQ-Q'
         on:
           tags: true
           all_branches: true
