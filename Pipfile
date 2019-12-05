@@ -12,6 +12,7 @@ flake8 = "==3.7"
 ipdb = "*"
 ipython = "*"
 mypy = "*"
+twine = "*"
 
 [packages]
 motor = '>=2.0.0'
