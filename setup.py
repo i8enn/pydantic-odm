@@ -57,6 +57,7 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Internet',
     ],
+    packages=['pydantic_odm'],
     python_requires='>=3.6',
     zip_safe=False
 )
