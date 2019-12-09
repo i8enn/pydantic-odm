@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import List, Dict, Union, TYPE_CHECKING, Any, AbstractSet
 
 from motor import motor_asyncio
+from bson import ObjectId
 from pydantic import BaseModel
 from pymongo.collection import Collection, ReturnDocument
 
@@ -27,6 +28,9 @@ class DBPydanticMixin(BaseModel):
         # DB
         collection: str = None
         database: str = None
+        json_encoders = {
+            ObjectId: lambda v: ObjectIdStr(v)
+        }
 
     def __setattr__(self, key, value):
         if key not in ['_id', '_doc']:
