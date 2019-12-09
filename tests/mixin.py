@@ -1,4 +1,6 @@
 """Tests for pydantic models mixins"""
+from pydantic_odm.types import ObjectIdStr
+from bson import ObjectId
 import pytest
 import re
 from typing import Optional
@@ -54,6 +56,16 @@ class TestDBPydanticMixin:
         example_model_as_dict = example_model.dict()
         assert '_doc' not in example_model_as_dict.keys()
         assert example_model_as_dict == example_model._doc
+    
+    async def test_jsonable_model(self, init_test_db):
+        example_model = ExampleModel(
+            title='test',
+            created=datetime.now(),
+            age=10
+        ) 
+        example_model._id = ObjectId()
+        assert isinstance(example_model._id, ObjectId)
+        assert example_model.json()
 
     async def test_get_collection(self, init_test_db, monkeypatch):
         col = await ExampleModel.get_collection()
