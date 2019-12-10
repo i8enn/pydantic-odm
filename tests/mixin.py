@@ -3,7 +3,7 @@ from pydantic_odm.types import ObjectIdStr
 from bson import ObjectId
 import pytest
 import re
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from motor import motor_asyncio
 from pymongo.collection import ReturnDocument
@@ -24,9 +24,16 @@ class ExampleModel(mixins.DBPydanticMixin):
         collection = 'test_collection'
 
 
+class ExampleEmbeddedModel(mixins.BaseDBMixin):
+    title: str
+    timestamp: datetime
+    parent: Optional[List[mixins.BaseDBMixin]] = list()
+
+
 class ExampleNestedModel(mixins.DBPydanticMixin):
     username: str
     info: ExampleModel = None
+    comments: Optional[List[ExampleEmbeddedModel]]
 
     class Config:
         database = 'default'
@@ -38,6 +45,36 @@ class ExampleModelInUpdate(BaseModel):
     title: Optional[str]
     created: Optional[datetime]
     age: Optional[int]
+
+
+class TestBaseDBMixin(mixins.BaseDBMixin):
+    async def test__update_model_from__doc(self):
+        example_model = ExampleEmbeddedModel(
+            title='Test comment #1',
+            timestamp=datetime.now()
+        )
+        example_model._doc = {
+            'title': 'Test comment #1'
+        }
+        example_model._update_model_from__doc()
+        assert example_model._doc == example_model.dict()
+
+        # Nested model
+        nested_model = ExampleNestedModel(
+            username='test_user'
+        )
+        nested_model._doc = {
+            'username': 'new_test_user',
+            'comments': [
+                {
+                    'title': 'Newest title from db',
+                    'timestamp': example_model.timestamp,
+                }
+            ]
+        }
+        nested_model._update_model_from__doc()
+        assert nested_model._doc == nested_model.dict()
+        assert nested_model.comments[0] == example_model
 
 
 class TestDBPydanticMixin:
@@ -323,20 +360,6 @@ class TestDBPydanticMixin:
         raise_msg = 'Not found _id in current model instance'
         with pytest.raises(ValueError, match=raise_msg):
             await example_model.reload()
-
-    async def test__update_model_from__doc(self):
-        example_model = ExampleModel(
-            title='Test title',
-            created=datetime.now(),
-            age=10,
-        )
-        example_model._doc = {
-            'title': 'New title from db',
-            'created': example_model.created,
-            'age': 15
-        }
-        example_model._update_model_from__doc()
-        assert example_model._doc == example_model.dict()
 
     async def test_delete(self, init_test_db):
         model_data = {

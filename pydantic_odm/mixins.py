@@ -1,6 +1,7 @@
 """Mixins for pydantic models"""
 from __future__ import annotations
 
+import abc
 from typing import List, Dict, Union, TYPE_CHECKING, Any, AbstractSet
 
 from motor import motor_asyncio
@@ -19,10 +20,26 @@ if TYPE_CHECKING:
     DictIntStrAny = Dict[IntStr, Any]
 
 
-class DBPydanticMixin(BaseModel):
+class BaseDBMixin(BaseModel, abc.ABC):
+    """Base class for Pydantic mixins"""
+    _doc: Dict = None
+
+    def _update_model_from__doc(self) -> BaseDBMixin:
+        """
+        Update model fields from _doc dictionary
+        (projection of a document from DB)
+        """
+        for name, field in self.__fields__.items():
+            value = self._doc.get(name)
+            if issubclass(field.type_, BaseModel) and isinstance(value, dict):
+                value = field.type_.parse_obj(value)
+            setattr(self, name, value)
+        return self
+
+
+class DBPydanticMixin(BaseDBMixin):
     """Help class for communicate of Pydantic model and MongoDB"""
     _id: ObjectIdStr = None
-    _doc: Dict = None
 
     class Config:
         # DB
@@ -143,15 +160,6 @@ class DBPydanticMixin(BaseModel):
             document._doc = documents[i]
             inserted_documents.append(document)
         return inserted_documents
-
-    def _update_model_from__doc(self) -> DBPydanticMixin:
-        """
-        Update model fields from _doc dictionary
-        (projection of a document from DB)
-        """
-        for field in self.__fields__.keys():
-            setattr(self, field, self._doc.get(field))
-        return self
 
     async def reload(self) -> DBPydanticMixin:
         """Reload model data from MongoDB (get new document from db)"""
