@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := all
-isort = isort -rc pydantic-odm tests
+isort = isort -rc pydantic_odm tests
 black = black -S -l 88 --target-version py37 pydantic_odm tests
 
 .PHONY: install
