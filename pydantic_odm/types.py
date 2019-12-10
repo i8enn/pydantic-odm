@@ -24,7 +24,7 @@ class ObjectIdStr(str):
             try:
                 ObjectId(str(v))
             except InvalidId:
-                raise ValueError("Not a valid ObjectId")
+                raise ValueError('Not a valid ObjectId')
             return v
 
 
