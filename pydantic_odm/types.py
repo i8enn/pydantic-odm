@@ -1,6 +1,6 @@
 """Types for pydantic models"""
 from datetime import datetime
-from typing import List, Dict, Union
+from typing import Dict, List, Union
 
 from bson import ObjectId
 from bson.errors import InvalidId
@@ -24,7 +24,7 @@ class ObjectIdStr(str):
             try:
                 ObjectId(str(v))
             except InvalidId:
-                raise ValueError("Not a valid ObjectId")
+                raise ValueError('Not a valid ObjectId')
             return v
 
 
@@ -35,6 +35,7 @@ class DateTimeRange(BaseModel):
     First elem - lower bound.
     Second elem - upper bound.
     """
+
     gte: datetime = None
     lte: datetime = None
 

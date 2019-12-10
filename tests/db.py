@@ -19,7 +19,6 @@ DATABASE_SETTING = {
 
 
 class TestMongoDBManager:
-
     async def test_create_instance(self):
         raise_msg = 'This is singleton object'
         with pytest.raises(TypeError, match=raise_msg):

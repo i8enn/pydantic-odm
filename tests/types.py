@@ -1,7 +1,7 @@
 """Tests for pydantic models types"""
-import pytest
 from datetime import datetime, timedelta
 
+import pytest
 from bson import ObjectId
 from pydantic import BaseModel, ValidationError
 
@@ -12,16 +12,17 @@ pytestmark = pytest.mark.asyncio
 
 class SchemeForTestDateTimeRange(BaseModel):
     """Scheme for test datetime range"""
+
     created: types.DateTimeRange = None
 
 
 class SchemeForTestObjectIdStr(BaseModel):
     """Scheme for test object id str type"""
+
     uid: types.ObjectIdStr = None
 
 
 class TestObjectIdStr:
-
     async def test_create(self):
         model = SchemeForTestObjectIdStr
         uid = ObjectId()
@@ -39,7 +40,6 @@ class TestObjectIdStr:
 
 
 class TestDateTimeRange:
-
     async def test_create(self):
         model = SchemeForTestDateTimeRange
         gte = datetime.now()
