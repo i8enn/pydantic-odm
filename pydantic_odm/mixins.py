@@ -2,15 +2,15 @@
 from __future__ import annotations
 
 import abc
-from typing import List, Dict, Union, TYPE_CHECKING, Any, AbstractSet
+from typing import TYPE_CHECKING, AbstractSet, Any, Dict, List, Union
 
-from motor import motor_asyncio
 from bson import ObjectId
+from motor import motor_asyncio
 from pydantic import BaseModel
 from pymongo.collection import Collection, ReturnDocument
 
-from .types import ObjectIdStr
 from .db import MongoDBManager
+from .types import ObjectIdStr
 
 if TYPE_CHECKING:
     IntStr = Union[int, str]
@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 
 class BaseDBMixin(BaseModel, abc.ABC):
     """Base class for Pydantic mixins"""
+
     _doc: Dict = None
 
     def _update_model_from__doc(self) -> BaseDBMixin:
@@ -39,15 +40,14 @@ class BaseDBMixin(BaseModel, abc.ABC):
 
 class DBPydanticMixin(BaseDBMixin):
     """Help class for communicate of Pydantic model and MongoDB"""
+
     _id: ObjectIdStr = None
 
     class Config:
         # DB
         collection: str = None
         database: str = None
-        json_encoders = {
-            ObjectId: lambda v: ObjectIdStr(v)
-        }
+        json_encoders = {ObjectId: lambda v: ObjectIdStr(v)}
 
     def __setattr__(self, key, value):
         if key not in ['_id', '_doc']:
@@ -64,7 +64,7 @@ class DBPydanticMixin(BaseDBMixin):
         skip_defaults: bool = None,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
-        exclude_none: bool = False
+        exclude_none: bool = False,
     ) -> DictStrAny:
         return super(DBPydanticMixin, self).dict(exclude={'_doc'})
 
@@ -73,14 +73,10 @@ class DBPydanticMixin(BaseDBMixin):
         db_name = getattr(cls.Config, 'database', None)
         collection_name = getattr(cls.Config, 'collection', None)
         if not db_name or not collection_name:
-            raise ValueError(
-                'Collection or db_name is not configured in Config class'
-            )
+            raise ValueError('Collection or db_name is not configured in Config class')
         db = MongoDBManager[db_name]
         if not db:
-            raise ValueError(
-                '"%s" is not found in MongoDBManager.databases' % db_name
-            )
+            raise ValueError('"%s" is not found in MongoDBManager.databases' % db_name)
 
         collection = db[collection_name]
         if not collection:
@@ -118,9 +114,7 @@ class DBPydanticMixin(BaseDBMixin):
 
     @classmethod
     async def find_many(
-            cls,
-            query: Dict[str, Dict[str, Any]],
-            return_cursor: bool = False
+        cls, query: Dict[str, Dict[str, Any]], return_cursor: bool = False
     ) -> Union[List[DBPydanticMixin], motor_asyncio.AsyncIOMotorCursor]:
         """
         Find documents by query and return list of model instances
@@ -141,8 +135,7 @@ class DBPydanticMixin(BaseDBMixin):
 
     @classmethod
     async def bulk_create(
-            cls,
-            documents: Union[List[BaseModel], List[Dict]],
+        cls, documents: Union[List[BaseModel], List[Dict]],
     ) -> List[DBPydanticMixin]:
         """Create many documents"""
         collection = await cls.get_collection()
@@ -172,10 +165,7 @@ class DBPydanticMixin(BaseDBMixin):
             self._update_model_from__doc()
         return self
 
-    async def update(
-            self,
-            fields: Union[BaseModel, Dict],
-    ) -> DBPydanticMixin:
+    async def update(self, fields: Union[BaseModel, Dict],) -> DBPydanticMixin:
         """
         Update Mongo document and pydantic instance.
 
@@ -188,9 +178,7 @@ class DBPydanticMixin(BaseDBMixin):
         if not self._id:
             raise ValueError('Not found _id in current model instance')
         _doc = await collection.find_one_and_update(
-            {'_id': self._id},
-            {'$set': fields},
-            return_document=ReturnDocument.AFTER
+            {'_id': self._id}, {'$set': fields}, return_document=ReturnDocument.AFTER
         )
         if _doc:
             self._doc.update(_doc)
@@ -203,10 +191,7 @@ class DBPydanticMixin(BaseDBMixin):
             instance = await collection.insert_one(self.dict())
             if instance:
                 self._id = instance.inserted_id
-                self._doc = {
-                    '_id': self._id,
-                    **self.dict()
-                }
+                self._doc = {'_id': self._id, **self.dict()}
         else:
             updated = {}
             for field, value in self.dict().items():
@@ -214,8 +199,7 @@ class DBPydanticMixin(BaseDBMixin):
                     updated[field] = value
             if updated:
                 instance = await collection.update_one(
-                    {'_id': self._id},
-                    {'$set': updated}
+                    {'_id': self._id}, {'$set': updated}
                 )
                 if instance:
                     self._doc.update(updated)

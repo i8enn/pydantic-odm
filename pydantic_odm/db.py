@@ -1,7 +1,7 @@
 """Database connector module"""
 from __future__ import annotations
 
-from typing import Dict, Type, Any
+from typing import Any, Dict, Type
 
 from motor import motor_asyncio
 
@@ -27,6 +27,7 @@ class MongoDBManager:
     ...
     any_collections = MongoDBManager.default.any_collections
     """
+
     settings: Dict[str, Dict[str, Any]] = {}
     connections: Dict[str, motor_asyncio.AsyncIOMotorClient] = {}
     databases: Dict[str, motor_asyncio.AsyncIOMotorDatabase] = {}
@@ -39,8 +40,7 @@ class MongoDBManager:
 
     @classmethod
     async def init_connections(
-            cls,
-            settings: Dict[str, Dict[str, Any]]
+        cls, settings: Dict[str, Dict[str, Any]]
     ) -> Type[MongoDBManager]:
         """Create connections to Mongo databases"""
         cls.settings = settings
@@ -52,7 +52,7 @@ class MongoDBManager:
                 host=configuration.get('HOST', 'localhost'),
                 port=configuration.get('PORT', 27017),
                 authSource=configuration.get('AUTH_SOURCE', 'admin'),
-                authMechanism=configuration.get('AUTH_MEC', 'SCRAM-SHA-256')
+                authMechanism=configuration.get('AUTH_MEC', 'SCRAM-SHA-256'),
             )
             db_name = configuration.get('NAME', alias)
             cls.connections[alias] = client
