@@ -55,9 +55,15 @@ class MongoDBManager:
         for alias, configuration in cls.settings.items():
             # Leave all parameters, exccept "NAME", empty, to
             # let connect with default system setting
-            params = ('USERNAME', 'PASSWORD', 'HOST', 'PORT')
-            if not any(configuration.get(n) for n in params):
+            username = configuration.get('USERNAME')
+            password = configuration.get('PASSWORD')
+            host = configuration.get('HOST')
+            port = configuration.get('PORT')
+            if not any((username, password, host, port)):
                 client = motor_asyncio.AsyncIOMotorClient()
+            # The HOST parameter is an Unix domain socket path
+            elif isinstance(host, str) and host.startswith('/'):
+                client = motor_asyncio.AsyncIOMotorClient(host)
             else:
                 client = motor_asyncio.AsyncIOMotorClient(
                     username=configuration.get('USERNAME'),
