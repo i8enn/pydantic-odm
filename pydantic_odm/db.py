@@ -15,12 +15,19 @@ class MongoDBManager:
     On startup application execute initial connect.
 
     def startup():
-        MongoDBManager.initial_connections(
-            username='mongo_user',
-            password='mongo_password',
-            host='localhost',
-            port=27017
-        )
+        MongoDBManager.initial_connections({
+            'default': {
+                'NAME': 'test_mongo',
+                'HOST': 'mongodb://localhost',
+                'PORT': 37017,
+                'USERNAME': 'mongo_user',
+                'PASSWORD': 'mongo_password',
+                'AUTHENTICATION_SOURCE': 'admin',
+            },
+            'default_linux': {
+                'NAME': 'test_mongo'
+            }
+        })
 
     Get collection in all place in your code:
     from pydantic_odm.db import MongoDBManager
@@ -46,14 +53,20 @@ class MongoDBManager:
         cls.settings = settings
 
         for alias, configuration in cls.settings.items():
-            client = motor_asyncio.AsyncIOMotorClient(
-                username=configuration.get('USERNAME'),
-                password=configuration.get('PASSWORD'),
-                host=configuration.get('HOST', 'localhost'),
-                port=configuration.get('PORT', 27017),
-                authSource=configuration.get('AUTH_SOURCE', 'admin'),
-                authMechanism=configuration.get('AUTH_MEC', 'SCRAM-SHA-256'),
-            )
+            # Leave all parameters, exccept "NAME", empty, to
+            # let connect with default system setting
+            params = ('USERNAME', 'PASSWORD', 'HOST', 'PORT')
+            if not any(configuration.get(n) for n in params):
+                client = motor_asyncio.AsyncIOMotorClient()
+            else:
+                client = motor_asyncio.AsyncIOMotorClient(
+                    username=configuration.get('USERNAME'),
+                    password=configuration.get('PASSWORD'),
+                    host=configuration.get('HOST', 'localhost'),
+                    port=configuration.get('PORT', 27017),
+                    authSource=configuration.get('AUTH_SOURCE', 'admin'),
+                    authMechanism=configuration.get('AUTH_MEC', 'SCRAM-SHA-256'),
+                )
             db_name = configuration.get('NAME', alias)
             cls.connections[alias] = client
             db = client[db_name]
