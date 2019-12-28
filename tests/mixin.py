@@ -62,7 +62,7 @@ class TestBaseDBMixin(mixins.BaseDBMixin):
         nested_model._doc = {
             'username': 'new_test_user',
             'comments': [
-                {'title': 'Newest title from db', 'timestamp': example_model.timestamp,}
+                {'title': 'Newest title from db', 'timestamp': example_model.timestamp}
             ],
         }
         nested_model._update_model_from__doc()
