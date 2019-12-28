@@ -5,19 +5,9 @@ import pytest
 
 from pydantic_odm import db
 
+from .conftest import DATABASE_SETTING
+
 pytestmark = pytest.mark.asyncio
-
-
-DATABASE_SETTING = {
-    'default': {
-        'NAME': 'test_mongo',
-        'HOST': 'mongodb://localhost',
-        'PORT': 37017,
-        'USERNAME': 'mongo_user',
-        'PASSWORD': 'mongo_password',
-        'AUTHENTICATION_SOURCE': 'admin',
-    }
-}
 
 
 class TestMongoDBManager:
