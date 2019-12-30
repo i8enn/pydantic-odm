@@ -3,9 +3,10 @@ import pytest
 
 from pydantic_odm.db import MongoDBManager
 
-from .db import DATABASE_SETTING
-
 pytestmark = pytest.mark.asyncio
+
+
+DATABASE_SETTING = {'default': {'NAME': 'test_mongo', 'PORT': 37017}}
 
 
 @pytest.fixture()
