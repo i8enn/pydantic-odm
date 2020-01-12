@@ -49,9 +49,9 @@ jobs:
     - ls -lha dist
     deploy:
       provider: pypi
-      skip_existing: true
-      username: '__token__'
+      skip_cleanup: true
+      username: __token__
       password:
-        secure: erJmYEBtLO9F+MOZaeUK/WBxnVqoc7Vnjxjx5oK07n6qRu4pOJrqg2d+vmIYuXUK+U1NhLVnQl+fg84LREj/oJbTx7ArU+FIn1CrDVWV9wO8eashnNPFemuagUbEaUFsJalcYOOxE/KJ8NuOIgJuSzK/KDchHmG8+xYLnrFmqm0fN0t3X6skFrN6I2LdZBwjizEcOeLdNnJM5PIdVA8sDHD2lTCueGO+2QxkPvvTn0x/W7nuEyWEDiwL8TEtAchbrGRFo6yvskgWFaQAdgmoF+ejWJkn21oPTsFlgiq84ikvryKFrNXj9477MtcpkyNGpPpIArEAQils/QpSYKOD82MiUjl7JB+od3qb7VkVCFnIQAocyUjAk3UZ3/kJDf8ahXM7LY9bufWpZia0z3PZSkZ38OBSXq/ppOLUhxq7pw41rr4DZjB7Jo6u8l0E1KdvNVLwHTTkv9xx4gzASPM+P8eQku8uP/c5WJczy9D2g6Fld5/WioTpkpNNgk7tRyGb/pl4rmU+Dn4kIY2++1VgYZyT0W0PGM+nJpr06RWuEjvVc4V7DWC6vObXK0IXiUo8UYLfJ5JQmPgOH4LgNSoCAMe77nXgTmtM5D0EFkEQYBgKLOi6AIQe0RmEnWzjbRqJE9u856h/gpjC2kGoD/NYiUQovfh7LxGaKe8pUHdojQM=
+        secure: J0gT3Jp6GqWkTEopEx3GI6Dn35XGLL40wBgw86hdXrT0MlkxnwbYj9iB1XuB9/S7/e8x/92XJEfnOYej0upHRxFDwr8zcJZb4kegqY+XnUkAKVjWoBt6iCzdeVga2a1eDtKqxTXz+KT0E2iL3ErDMeYLYqRyvS+4dDws1KEqkZUYHDYQLwGn3QajFRsjrgdk2PfKcoY/m7PSDSmEuLHZ9i0/DyLn41LAZUqoR9ZKuSIwuVfqr28wqDvtG3UM8vrhsIhFKIJk7Ahh9HNy80z0T3aEQPnM9LNRGWbl5C9CN9OTawA820pwj8n95z/LUKu9k00AKB9dLn7E72NlrtdtONJKBtiwGh7OAkIwjBgCCgrnpLF0gCi5yxGdZ68ZbogAUMC9NS0NkSJVYEqubAOyqpZ2ubQDUjtjKqJKp88Xo/k9jZ6u1ZIY+GsXHVcc/PZ1hBrInRt5kxiAHwzCkdT6lV3Stg0HwLwcQRihKRJQk9h0p0xt4IBK1C8yctNuvoC1jzFHgfJxjoe4xQ1feQJQbVmzLXj6fZbqahBVl89el6mT9jPX1e7sd+JEAFIz6PZOH75iO7x6kgMI36S0A8bbqT3ZnHWTjKegoHTSNdPH4LkXs/y3HVsol4nB1Sj95n0iMsC+LlrduEaaYtFlH+yLO8E7e3eafv2bBEMU9RXJZKQ=
       on:
         tags: true
