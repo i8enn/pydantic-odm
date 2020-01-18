@@ -248,6 +248,21 @@ class TestDBPydanticMixin:
             assert document._id
             assert document._doc == document.dict()
 
+    async def test_update_many(self, init_test_db):
+        models = [
+            ExampleModel(title='Model #%d' % i, created=datetime.now(), age=i)
+            for i in range(1, 5)
+        ]
+        await ExampleModel.bulk_create(models)
+
+        # Update documents whose age more than 1 and less than 4
+        query = {'age': {'$gt': 1, '$lte': 3}}
+        fields = {'$set': {'title': 'New Model Title!'}}
+        updated_documents = await ExampleModel.update_many(query, fields)
+        for doc in updated_documents:
+            assert 1 < doc.age <= 3
+            assert doc.title == 'New Model Title!'
+
     async def test_update(self, init_test_db):
         model_data = {
             'title': 'Test title',
