@@ -134,6 +134,20 @@ class DBPydanticMixin(BaseDBMixin):
         return documents
 
     @classmethod
+    async def update_many(
+        cls,
+        query: Dict[str, Dict[str, Any]],
+        fields: Dict[str, Union[str, Dict]],
+        return_cursor: bool = False,
+    ) -> Union[List[DBPydanticMixin], motor_asyncio.AsyncIOMotorCursor]:
+        """
+        Find and update documents by query
+        """
+        collection = await cls.get_collection()
+        await collection.update_many(query, fields)
+        return await cls.find_many(query, return_cursor)
+
+    @classmethod
     async def bulk_create(
         cls, documents: Union[List[BaseModel], List[Dict]],
     ) -> List[DBPydanticMixin]:
