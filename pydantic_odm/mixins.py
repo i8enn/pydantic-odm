@@ -136,8 +136,8 @@ class DBPydanticMixin(BaseDBMixin):
     @classmethod
     async def update_many(
         cls,
-        query: Dict[str, Dict[str, Any]],
-        fields: Dict[str, Union[str, Dict]],
+        query: Dict[str, Any],
+        fields: Dict[str, Dict[str, Any]],
         return_cursor: bool = False,
     ) -> Union[List[DBPydanticMixin], motor_asyncio.AsyncIOMotorCursor]:
         """
