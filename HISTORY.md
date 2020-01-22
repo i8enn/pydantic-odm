@@ -1,3 +1,8 @@
+## 0.2 (unreleased)
+
+* Implemented `id` public property for `PydanticDBMixin`. Updated *db mixins* and their tests. PR #17 by @i8enn
+
+
 ## 0.1.6 (20.01.2020)
 
 * Fix arguments type in `update_many` method from `PydanticDBMixin`. PR #16 by @i8enn
