@@ -2,6 +2,9 @@
 isort = isort -rc pydantic_odm tests
 black = black -S -l 88 --target-version py37 pydantic_odm tests
 
+# Makefile target args
+args = $(filter-out $@,$(MAKECMDGOALS))
+
 .PHONY: install
 install:
 	pip install -U pipenv
@@ -40,6 +43,10 @@ mypy:
 .PHONY: test
 test:
 	pytest --cov=pydantic_odm
+
+.PHONY: testwatch
+testwatch: testwatch
+	pytest --cov=pydantic_odm -fsvvl --ff --color=yes ${args}
 
 .PHONY: testcov
 testcov: test
