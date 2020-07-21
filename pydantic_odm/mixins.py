@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import abc
 from typing import TYPE_CHECKING, AbstractSet, Any, Dict, List, Union
+from enum import Enum
 
 from bson import ObjectId
 from motor import motor_asyncio
@@ -18,6 +19,35 @@ if TYPE_CHECKING:
     DictAny = Dict[Any, Any]
     DictStrAny = Dict[str, Any]
     DictIntStrAny = Dict[IntStr, Any]
+
+
+def _convert_enums(data: Union[Dict, List]) -> Union[Dict, List]:
+    """
+    Convert Enum to Enum.value for mongo query
+
+    Note: May be this solution not good
+    """
+    # Convert in dict
+    _data = []
+    iterator = enumerate(data)
+    append = lambda k, v: _data.append(v)
+    if isinstance(data, dict):
+        iterator = data.items()
+        _data = {}
+        append = lambda k, v: _data.update({k: v})
+    # Convert in list
+    # Iterate passed data
+    for k, v in iterator:
+        # Replace enum object to enum value
+        if isinstance(v, Enum):
+            v = v.value
+        # Recursive call if find sequence
+        if isinstance(v, (list, dict)):
+            v = _convert_enums(v)
+        # Update new data with update method (append for list and update for dict)
+        append(k, v)
+    # Return new data
+    return _data
 
 
 class BaseDBMixin(BaseModel, abc.ABC):
@@ -55,6 +85,7 @@ class BaseDBMixin(BaseModel, abc.ABC):
     @classmethod
     def _convert_id_in_mongo_query(cls, query: Dict) -> Dict:
         _query = {}
+        query = _convert_enums(query)
         for k, v in query.items():
             if k == 'id':
                 _query['_id'] = v
@@ -199,7 +230,7 @@ class DBPydanticMixin(BaseDBMixin):
         if not documents:
             return []
         if isinstance(documents[0], BaseModel):
-            documents = [d.dict() for d in documents]
+            documents = [_convert_enums(d.dict()) for d in documents]
 
         result = await collection.insert_many(documents)
         inserted_ids = result.inserted_ids
@@ -235,6 +266,7 @@ class DBPydanticMixin(BaseDBMixin):
         collection = await self.get_collection()
         if not self._id:
             raise ValueError('Not found _id in current model instance')
+        fields = _convert_enums(fields)
         _doc = await collection.find_one_and_update(
             {'_id': self._id}, {'$set': fields}, return_document=ReturnDocument.AFTER
         )
@@ -246,13 +278,15 @@ class DBPydanticMixin(BaseDBMixin):
     async def save(self) -> DBPydanticMixin:
         collection = await self.get_collection()
         if not self._id:
-            instance = await collection.insert_one(self.dict())
+            data = _convert_enums(self.dict())
+            instance = await collection.insert_one(data)
             if instance:
                 self._id = instance.inserted_id
                 self._doc = {'_id': instance.inserted_id, **self.dict(exclude={'id'})}
         else:
             updated = {}
-            for field, value in self.dict(exclude={'id'}).items():
+            data = _convert_enums(self.dict(exclude={'id'}))
+            for field, value in data.items():
                 if self._doc.get(field) != value:
                     updated[field] = value
             if updated:
