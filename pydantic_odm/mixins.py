@@ -2,12 +2,11 @@
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, AbstractSet, Any, Dict, List, Union
-
 from bson import ObjectId
 from motor import motor_asyncio
 from pydantic import BaseModel
 from pymongo.collection import Collection, ReturnDocument
+from typing import TYPE_CHECKING, AbstractSet, Any, Dict, List, Union
 
 from .db import MongoDBManager
 from .types import ObjectIdStr
