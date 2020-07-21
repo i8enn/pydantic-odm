@@ -1,14 +1,13 @@
 """Tests for pydantic models mixins"""
 import json
-import re
-from datetime import datetime, timedelta
-from typing import List, Optional
-
 import pytest
+import re
 from bson import ObjectId
+from datetime import datetime, timedelta
 from motor import motor_asyncio
 from pydantic import BaseModel
 from pymongo.collection import ReturnDocument
+from typing import List, Optional
 
 from pydantic_odm import mixins
 

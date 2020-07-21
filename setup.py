@@ -58,6 +58,10 @@ setup(
         'Topic :: Internet',
     ],
     packages=['pydantic_odm'],
+    install_requires=[
+        'pydantic>=1.1',
+        'motor>=2.0',
+    ],
     python_requires='>=3.6',
     zip_safe=False
 )
