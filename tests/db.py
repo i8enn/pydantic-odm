@@ -1,6 +1,5 @@
 """Tests for database connector module"""
 import importlib
-
 import pytest
 
 from pydantic_odm import db
