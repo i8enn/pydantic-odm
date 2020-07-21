@@ -2,13 +2,12 @@
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, AbstractSet, Any, Dict, List, Union
-from enum import Enum
-
 from bson import ObjectId
+from enum import Enum
 from motor import motor_asyncio
 from pydantic import BaseModel
 from pymongo.collection import Collection, ReturnDocument
+from typing import TYPE_CHECKING, AbstractSet, Any, Dict, List, Union
 
 from .db import MongoDBManager
 from .types import ObjectIdStr
@@ -30,11 +29,11 @@ def _convert_enums(data: Union[Dict, List]) -> Union[Dict, List]:
     # Convert in dict
     _data = []
     iterator = enumerate(data)
-    append = lambda k, v: _data.append(v)
+    append = lambda k, v: _data.append(v)  # noqa: E731
     if isinstance(data, dict):
         iterator = data.items()
         _data = {}
-        append = lambda k, v: _data.update({k: v})
+        append = lambda k, v: _data.update({k: v})  # noqa: E731
     # Convert in list
     # Iterate passed data
     for k, v in iterator:

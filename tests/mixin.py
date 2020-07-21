@@ -1,15 +1,14 @@
 """Tests for pydantic models mixins"""
 import json
-import re
-from datetime import datetime, timedelta
-from typing import List, Optional
-from enum import Enum
-
 import pytest
+import re
 from bson import ObjectId
+from datetime import datetime, timedelta
+from enum import Enum
 from motor import motor_asyncio
 from pydantic import BaseModel, Field
 from pymongo.collection import ReturnDocument
+from typing import List, Optional
 
 from pydantic_odm import mixins
 
@@ -18,6 +17,7 @@ pytestmark = pytest.mark.asyncio
 
 class UserTypesEnum(Enum):
     """Example user enum"""
+
     Admin = 'admin'
     Manager = 'manager'
     Author = 'author'
@@ -122,18 +122,19 @@ class TestBaseDBMixin:
         assert post.comments[1].created == comment_from_doc.get('created')
 
     @pytest.mark.parametrize(
-        'model, model_data, enum_field_name, expected_val', [
+        'model, model_data, enum_field_name, expected_val',
+        [
             pytest.param(
                 User,
                 {
                     'username': 'test',
                     'type': UserTypesEnum.Admin,
                     'created': datetime.now(),
-                    'age': 10
+                    'age': 10,
                 },
                 'type',
                 UserTypesEnum.Admin.value,
-                id='simple'
+                id='simple',
             ),
             pytest.param(
                 Post,
@@ -144,17 +145,17 @@ class TestBaseDBMixin:
                         'username': 'test',
                         'type': UserTypesEnum.Admin,
                         'created': datetime.now(),
-                        'age': 10
+                        'age': 10,
                     },
                 },
                 'author.type',
                 UserTypesEnum.Admin.value,
-                id='nested'
+                id='nested',
             ),
-        ]
+        ],
     )
     async def test__convert_enums(
-            self, model, model_data, enum_field_name, expected_val
+        self, model, model_data, enum_field_name, expected_val
     ):
         instance = model(**model_data)
         instance_dict = mixins._convert_enums(instance.dict())
