@@ -7,9 +7,10 @@ args = $(filter-out $@,$(MAKECMDGOALS))
 
 .PHONY: install
 install:
-	pip install -U pipenv
-	pipenv install --dev
-	pipenv run pip install -e .
+	pip install -U poetry
+	POETRY_VIRTUALENVS_IN_PROJECT=true poetry env use python3.8
+	poetry install
+	poetry run pip install -e .
 
 .PHONY: build-cython-trace
 build-cython-trace:
