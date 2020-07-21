@@ -2,12 +2,12 @@
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, AbstractSet, Any, Dict, List, Union
-
 from bson import ObjectId
+from enum import Enum
 from motor import motor_asyncio
 from pydantic import BaseModel
 from pymongo.collection import Collection, ReturnDocument
+from typing import TYPE_CHECKING, AbstractSet, Any, Dict, List, Union
 
 from .db import MongoDBManager
 from .types import ObjectIdStr
@@ -20,40 +20,81 @@ if TYPE_CHECKING:
     DictIntStrAny = Dict[IntStr, Any]
 
 
+def _convert_enums(data: Union[Dict, List]) -> Union[Dict, List]:
+    """
+    Convert Enum to Enum.value for mongo query
+
+    Note: May be this solution not good
+    """
+    # Convert in dict
+    _data = []
+    iterator = enumerate(data)
+    append = lambda k, v: _data.append(v)  # noqa: E731
+    if isinstance(data, dict):
+        iterator = data.items()
+        _data = {}
+        append = lambda k, v: _data.update({k: v})  # noqa: E731
+    # Convert in list
+    # Iterate passed data
+    for k, v in iterator:
+        # Replace enum object to enum value
+        if isinstance(v, Enum):
+            v = v.value
+        # Recursive call if find sequence
+        if isinstance(v, (list, dict)):
+            v = _convert_enums(v)
+        # Update new data with update method (append for list and update for dict)
+        append(k, v)
+    # Return new data
+    return _data
+
+
 class BaseDBMixin(BaseModel, abc.ABC):
     """Base class for Pydantic mixins"""
 
-    _doc: Dict = None
+    # Read-only (for public) field for store MongoDB id
+    _id: ObjectIdStr = None
+    _doc: Dict = {}
+
+    class Config:
+        allow_population_by_field_name = True
+        schema_extra = {'id': 'str'}
+
+    def __setattr__(self, key, value):
+        if key not in ['_doc', '_id']:
+            return super(BaseDBMixin, self).__setattr__(key, value)
+        self.__dict__[key] = value
+        return value
+
+    @property
+    def id(self) -> ObjectIdStr:
+        return self._id
 
     def _update_model_from__doc(self) -> BaseDBMixin:
         """
         Update model fields from _doc dictionary
         (projection of a document from DB)
         """
-        for name, field in self.__fields__.items():
-            value = self._doc.get(name)
-            if issubclass(field.type_, BaseModel) and isinstance(value, dict):
-                value = field.type_.parse_obj(value)
-            setattr(self, name, value)
-        return self
+        new_obj = self.parse_obj(self._doc)
+        new_obj._id = self._doc.get('_id')
+        for k, v in new_obj.__dict__.items():
+            self.__dict__[k] = v
+        return new_obj
 
-
-class DBPydanticMixin(BaseDBMixin):
-    """Help class for communicate of Pydantic model and MongoDB"""
-
-    _id: ObjectIdStr = None
-
-    class Config:
-        # DB
-        collection: str = None
-        database: str = None
-        json_encoders = {ObjectId: lambda v: ObjectIdStr(v)}
-
-    def __setattr__(self, key, value):
-        if key not in ['_id', '_doc']:
-            return super(DBPydanticMixin, self).__setattr__(key, value)
-        self.__dict__[key] = value
-        return value
+    @classmethod
+    def _convert_id_in_mongo_query(cls, query: Dict) -> Dict:
+        _query = {}
+        query = _convert_enums(query)
+        for k, v in query.items():
+            if k == 'id':
+                _query['_id'] = v
+            elif isinstance(v, dict):
+                _query[k] = cls._convert_id_in_mongo_query(v)
+            elif isinstance(v, (list, tuple)):
+                _query[k] = [cls._convert_id_in_mongo_query(i) for i in v]
+            else:
+                _query[k] = v
+        return _query
 
     def dict(
         self,
@@ -66,7 +107,35 @@ class DBPydanticMixin(BaseDBMixin):
         exclude_defaults: bool = False,
         exclude_none: bool = False,
     ) -> DictStrAny:
-        return super(DBPydanticMixin, self).dict(exclude={'_doc'})
+        if not exclude:
+            exclude = {'_doc', '_id'}
+        else:
+            exclude.update({'_doc', '_id'})  # noqa
+
+        d = super(BaseDBMixin, self).dict(
+            include=include,
+            exclude=exclude,
+            by_alias=by_alias,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+            exclude_none=exclude_none,
+        )
+
+        # Simulating field alias behavior
+        if (not self.id and (exclude_none or exclude_defaults)) or 'id' in exclude:
+            return d
+        d['id'] = self.id
+        return d
+
+
+class DBPydanticMixin(BaseDBMixin):
+    """Help class for communicate of Pydantic model and MongoDB"""
+
+    class Config:
+        # DB
+        collection: str = None
+        database: str = None
+        json_encoders = {ObjectId: lambda v: ObjectIdStr(v)}
 
     @classmethod
     async def get_collection(cls) -> Collection:
@@ -97,6 +166,7 @@ class DBPydanticMixin(BaseDBMixin):
         """Return count by query or all documents in collection"""
         if not query:
             query = {}
+        query = cls._convert_id_in_mongo_query(query)
         collection = await cls.get_collection()
         return await collection.count_documents(query)
 
@@ -104,6 +174,7 @@ class DBPydanticMixin(BaseDBMixin):
     async def find_one(cls, query: Dict) -> DBPydanticMixin:
         """Find and return model from db by pymongo query"""
         collection = await cls.get_collection()
+        query = cls._convert_id_in_mongo_query(query)
         result = await collection.find_one(query)
         if result:
             model = cls.parse_obj(result)
@@ -121,6 +192,7 @@ class DBPydanticMixin(BaseDBMixin):
         or query cursor
         """
         collection = await cls.get_collection()
+        query = cls._convert_id_in_mongo_query(query)
         cursor = collection.find(query)
         if return_cursor:
             return cursor
@@ -128,7 +200,7 @@ class DBPydanticMixin(BaseDBMixin):
         documents = []
         async for _doc in cursor:
             document = cls.parse_obj(_doc)
-            document._id = _doc['_id']
+            document._id = _doc.get('_id')
             document._doc = _doc
             documents.append(document)
         return documents
@@ -144,6 +216,7 @@ class DBPydanticMixin(BaseDBMixin):
         Find and update documents by query
         """
         collection = await cls.get_collection()
+        query = cls._convert_id_in_mongo_query(query)
         await collection.update_many(query, fields)
         return await cls.find_many(query, return_cursor)
 
@@ -156,7 +229,7 @@ class DBPydanticMixin(BaseDBMixin):
         if not documents:
             return []
         if isinstance(documents[0], BaseModel):
-            documents = [d.dict() for d in documents]
+            documents = [_convert_enums(d.dict()) for d in documents]
 
         result = await collection.insert_many(documents)
         inserted_ids = result.inserted_ids
@@ -174,6 +247,7 @@ class DBPydanticMixin(BaseDBMixin):
         if not self._id:
             raise ValueError('Not found _id in current model instance')
         _doc = await collection.find_one({'_id': self._id})
+        _doc.pop('_id')
         if _doc:
             self._doc = _doc
             self._update_model_from__doc()
@@ -191,6 +265,7 @@ class DBPydanticMixin(BaseDBMixin):
         collection = await self.get_collection()
         if not self._id:
             raise ValueError('Not found _id in current model instance')
+        fields = _convert_enums(fields)
         _doc = await collection.find_one_and_update(
             {'_id': self._id}, {'$set': fields}, return_document=ReturnDocument.AFTER
         )
@@ -202,13 +277,15 @@ class DBPydanticMixin(BaseDBMixin):
     async def save(self) -> DBPydanticMixin:
         collection = await self.get_collection()
         if not self._id:
-            instance = await collection.insert_one(self.dict())
+            data = _convert_enums(self.dict())
+            instance = await collection.insert_one(data)
             if instance:
                 self._id = instance.inserted_id
-                self._doc = {'_id': self._id, **self.dict()}
+                self._doc = {'_id': instance.inserted_id, **self.dict(exclude={'id'})}
         else:
             updated = {}
-            for field, value in self.dict().items():
+            data = _convert_enums(self.dict(exclude={'id'}))
+            for field, value in data.items():
                 if self._doc.get(field) != value:
                     updated[field] = value
             if updated:

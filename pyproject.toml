@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "pydantic-odm"
+version = "0.2"
+description = "Small async ODM for MongoDB based in Motor and Pydantic"
+authors = ["Ivan Galin <gin.volgograd@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "~3.8"
+motor = "^2.1.0"
+pymongo = "^3.10.1"
+pydantic = {version = "^1.6.1", extras = ["email"]}
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.4.3"
+pytest-xdist = "^1.33.0"
+pytest-asyncio = "^0.14.0"
+pytest-cov = "^2.10.0"
+pytest-mock = "^3.2.0"
+flake8 = "^3.8.3"
+mypy = "^0.782"
+black = "^19.10b0"
+flake8-quotes = "^3.2.0"
+isort = "^5.1.4"
+ipython = "^7.16.1"
+ipdb = "^0.13.3"
+devtools = "^0.5.1"
+
+[build-system]
+requires = ["poetry>=1.0"]
+build-backend = "poetry.masonry.api"

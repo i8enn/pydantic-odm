@@ -1,9 +1,8 @@
 """Database connector module"""
 from __future__ import annotations
 
-from typing import Any, Dict, Type
-
 from motor import motor_asyncio
+from typing import Any, Dict, Type
 
 
 class MongoDBManager:

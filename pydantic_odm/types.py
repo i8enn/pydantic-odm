@@ -1,10 +1,9 @@
 """Types for pydantic models"""
-from datetime import datetime
-from typing import Dict, List, Union
-
 from bson import ObjectId
 from bson.errors import InvalidId
+from datetime import datetime
 from pydantic import BaseModel
+from typing import Dict, List, Union
 
 from .errors import DatetimeBorderCrossing
 

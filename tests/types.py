@@ -1,8 +1,7 @@
 """Tests for pydantic models types"""
-from datetime import datetime, timedelta
-
 import pytest
 from bson import ObjectId
+from datetime import datetime, timedelta
 from pydantic import BaseModel, ValidationError
 
 from pydantic_odm import types
