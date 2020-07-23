@@ -17,11 +17,13 @@ class UserTypesEnum(Enum):
 
 
 class TestAbstractMongoDBEncoder:
-    def test_abstract__call__(self):
-        encoder = mongodb_encoders.AbstractMongoDBEncoder()
+    async def test_abstract_cls(self):
+        with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+            mongodb_encoders.AbstractMongoDBEncoder()
+
+    async def test_abstract__call__(self):
+        encoder = mongodb_encoders.AbstractMongoDBEncoder
         assert getattr(encoder.__call__, '__isabstractmethod__') is True
-        with pytest.raises(NotImplementedError):
-            encoder.__call__({})
 
 
 class TestEnumEncode:
@@ -97,6 +99,6 @@ class TestBaseMongoDBEncoder:
             ),
         ],
     )
-    def test_encode(self, data, expected):
+    async def test_encode(self, data, expected):
         encoder = mongodb_encoders.BaseMongoDBEncoder()
         assert encoder(data) == expected

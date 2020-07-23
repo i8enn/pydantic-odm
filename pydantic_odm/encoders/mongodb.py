@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Dict, List, Union
 
 
-class AbstractMongoDBEncoder:
+class AbstractMongoDBEncoder(abc.ABC):
     """Abstract MongoDB encoder"""
 
     @abc.abstractmethod
