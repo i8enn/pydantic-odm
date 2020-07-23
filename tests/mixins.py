@@ -67,6 +67,103 @@ class UserSerializer(BaseModel):
 
 
 class TestBaseDBMixin:
+    @pytest.mark.parametrize(
+        'include,exclude,exclude_unset,exclude_defaults,exclude_none,data,expected',
+        [
+            pytest.param(
+                None,
+                # Exclude 'id' field for temporary fix
+                # of create empty id fields in models
+                {'id'},
+                False,
+                False,
+                False,
+                {
+                    'username': 'test',
+                    'created': datetime.fromisoformat(
+                        datetime.now().date().isoformat()
+                    ),
+                    'age': 30,
+                    'type': UserTypesEnum.Admin,
+                },
+                {
+                    'username': 'test',
+                    'created': datetime.fromisoformat(
+                        datetime.now().date().isoformat()
+                    ),
+                    'age': 30,
+                    'type': UserTypesEnum.Admin.value,
+                },
+                id='simple',
+            ),
+            pytest.param(
+                None,
+                None,
+                True,
+                True,
+                False,
+                {
+                    'username': 'test',
+                    'created': datetime.fromisoformat(
+                        datetime.now().date().isoformat()
+                    ),
+                },
+                {
+                    'username': 'test',
+                    'created': datetime.fromisoformat(
+                        datetime.now().date().isoformat()
+                    ),
+                },
+                id='without_defaults_and_none',
+            ),
+        ],
+    )
+    async def test__encode_model_to_mongo(
+        self,
+        include,
+        exclude,
+        exclude_unset,
+        exclude_defaults,
+        exclude_none,
+        data,
+        expected,
+    ):
+        user = User.parse_obj(data)
+        model_for_mongodb = user._encode_model_to_mongo(
+            include, exclude, exclude_unset, exclude_defaults, exclude_none
+        )
+        assert model_for_mongodb == expected
+
+    @pytest.mark.parametrize(
+        'data,expected',
+        [
+            pytest.param(
+                {
+                    'username': 'test',
+                    'created': datetime.fromisoformat(
+                        datetime.now().date().isoformat()
+                    ),
+                    'age': 30,
+                    'type': UserTypesEnum.Admin,
+                },
+                {
+                    'username': 'test',
+                    'created': datetime.fromisoformat(
+                        datetime.now().date().isoformat()
+                    ),
+                    'age': 30,
+                    'type': UserTypesEnum.Admin.value,
+                },
+                id='simple',
+            ),
+        ],
+    )
+    async def test__encode_dict_to_mongo(self, data, expected):
+        user = User.parse_obj(data)
+        # Exclude 'id' field for temporary fix of create empty id fields in models
+        model_for_mongodb = user._encode_dict_to_mongo(user.dict(exclude={'id'}))
+        assert model_for_mongodb == expected
+
     async def test__update_model_from__doc(self):
         # Simple model
         user = User(username='test_user', created=datetime.now(), age=10)
@@ -120,53 +217,6 @@ class TestBaseDBMixin:
         assert isinstance(post.comments[1], Comment)
         assert post.comments[1].body == comment_from_doc.get('body')
         assert post.comments[1].created == comment_from_doc.get('created')
-
-    @pytest.mark.parametrize(
-        'model, model_data, enum_field_name, expected_val',
-        [
-            pytest.param(
-                User,
-                {
-                    'username': 'test',
-                    'type': UserTypesEnum.Admin,
-                    'created': datetime.now(),
-                    'age': 10,
-                },
-                'type',
-                UserTypesEnum.Admin.value,
-                id='simple',
-            ),
-            pytest.param(
-                Post,
-                {
-                    'title': 'test',
-                    'body': 'test body',
-                    'author': {
-                        'username': 'test',
-                        'type': UserTypesEnum.Admin,
-                        'created': datetime.now(),
-                        'age': 10,
-                    },
-                },
-                'author.type',
-                UserTypesEnum.Admin.value,
-                id='nested',
-            ),
-        ],
-    )
-    async def test__convert_enums(
-        self, model, model_data, enum_field_name, expected_val
-    ):
-        instance = model(**model_data)
-        instance_dict = mixins._convert_enums(instance.dict())
-        enum_field_path = enum_field_name.split('.')
-        enum_value = instance_dict
-        for field in enum_field_path:
-            if not isinstance(enum_value, dict):
-                raise TypeError(f'enum_value must be dict, got {type(enum_value)}')
-            enum_value = enum_value.get(field)
-
-        assert enum_value == expected_val
 
     async def test_exclude__doc_from_dict(self):
         user = User(username='test', created=datetime.now(), age=10)
