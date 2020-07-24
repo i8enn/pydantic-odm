@@ -57,7 +57,7 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Internet',
     ],
-    packages=['pydantic_odm'],
+    packages=create_package_list('pydantic_odm'),
     install_requires=[
         'pydantic>=1.1',
         'motor>=2.0',
