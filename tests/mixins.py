@@ -1,5 +1,4 @@
 """Tests for pydantic models mixins"""
-import json
 import pytest
 import re
 from bson import ObjectId
@@ -66,7 +65,7 @@ class UserSerializer(BaseModel):
     age: Optional[int]
 
 
-class TestBaseDBMixin:
+class BaseDBMixinTestCase:
     @pytest.mark.parametrize(
         'include,exclude,exclude_unset,exclude_defaults,exclude_none,data,expected',
         [
@@ -168,12 +167,12 @@ class TestBaseDBMixin:
         # Simple model
         user = User(username='test_user', created=datetime.now(), age=10)
         user._doc = {
-            '_id': ObjectId(),
+            'id': ObjectId(),
             'username': 'new_test_user',
             'created': user.created + timedelta(days=1),
         }
         user._update_model_from__doc()
-        assert user.id == user._doc.get('_id')
+        assert user.id == user._doc.get('id')
         assert user.username == user._doc.get('username')
         assert user.created == user._doc.get('created')
         assert user.age == user._doc.get('age')
@@ -181,29 +180,29 @@ class TestBaseDBMixin:
         # Nested model
         post = Post(title='test_title', body='test_body', author=user)
         post._doc = {
-            '_id': ObjectId(),
+            'id': ObjectId(),
             'title': 'new_test_title',
             'body': 'new_test_body',
-            'author': user.dict(exclude_defaults=True),
+            'author': user._doc,
             'comments': [
                 {
-                    '_id': ObjectId(),
+                    'id': ObjectId(),
                     'body': 'Newest title from db',
                     'created': datetime.now(),
                 },
                 {
-                    '_id': ObjectId(),
+                    'id': ObjectId(),
                     'body': 'Newest title from db',
                     'created': datetime.now(),
                 },
             ],
         }
         post._update_model_from__doc()
-        assert post.id == post._doc.get('_id')
+        assert post.id == post._doc.get('id')
         assert post.title == post._doc.get('title')
         assert post.body == post._doc.get('body')
         author_from_doc = post._doc.get('author')
-        assert post.author.id == author_from_doc.get('_id')
+        assert ObjectId(post.author.id) == author_from_doc.get('id')
         assert post.author.username == author_from_doc.get('username')
         assert post.author.created == author_from_doc.get('created')
         assert post.author.age == author_from_doc.get('age')
@@ -231,51 +230,17 @@ class TestBaseDBMixin:
 
     async def test_convert__id_field_in_dict(self):
         user = User(username='test', created=datetime.now(), age=10)
-        user._id = ObjectId()
+        user.id = ObjectId()
         assert user.id
         user_as_dict = user.dict(exclude_unset=True)
         assert user_as_dict.get('id') == user.id
 
-    async def test_schema(self):
-        user = User(username='test', created=datetime.now(), age=10)
-        user._id = ObjectId()
-        user._doc = user.dict()
-        assert user.id
-        assert user._doc
-        schema = json.loads(user.schema_json())
-        assert '_doc' not in schema.keys()
-        assert schema.get('id') == 'str'
 
-    async def test__convert_id_in_mongo_query(self):
-        query = {
-            'id': ObjectId(),
-            'title': 'test',
-            'author': {'id': ObjectId(), 'username': 'test_author'},
-            'comments': [
-                {'id': ObjectId(), 'username': 'test_user_1', 'body': 'test_comment_1'},
-                {'id': ObjectId(), 'username': 'test_user_2', 'body': 'test_comment_2'},
-            ],
-        }
-        converted_query = Post._convert_id_in_mongo_query(query)
-        assert isinstance(converted_query, dict)
-        assert converted_query.get('_id')
-        assert not converted_query.get('id')
-        author = converted_query.get('author', {})
-        assert author.get('_id')
-        assert not author.get('id')
-        comment_1 = converted_query.get('comments', [])[0]
-        assert comment_1.get('_id')
-        assert not comment_1.get('id')
-        comment_2 = converted_query.get('comments', [])[1]
-        assert comment_2.get('_id')
-        assert not comment_2.get('id')
-
-
-class TestDBPydanticMixin:
+class DBPydanticMixinTestCase:
     async def test_jsonable_model(self, init_test_db):
         user = User(username='test', created=datetime.now(), age=10)
-        user._id = ObjectId()
-        assert isinstance(user._id, ObjectId)
+        user.id = ObjectId()
+        assert isinstance(user.id, ObjectId)
         assert user.json()
 
     async def test_get_collection(self, init_test_db, monkeypatch):
@@ -309,12 +274,11 @@ class TestDBPydanticMixin:
         assert user.created == model_data['created']
         assert user.age == model_data['age']
 
-        assert not user._id
+        assert not user.id
         assert not user._doc
         await user.save()
         assert user
         doc = user._doc
-        assert 'id' not in doc.keys()
         assert doc.get('username') == user.username
         assert doc.get('created') == user.created
         assert doc.get('age') == user.age
@@ -324,15 +288,14 @@ class TestDBPydanticMixin:
         user = User(**model_data)
         await user.save()
         assert user
-        old_id = user._id
+        old_id = user.id
 
         new_username = 'new_test'
         user.username = new_username
         await user.save()
         assert user.username == new_username
         assert user._doc.get('username') == new_username
-        assert 'id' not in user._doc.keys()
-        assert user._doc.get('_id') == old_id
+        assert user._doc.get('id') == old_id
         assert old_id == user.id
 
     async def test_save_nested_model(self, init_test_db):
@@ -369,9 +332,8 @@ class TestDBPydanticMixin:
         if isinstance(model_data, BaseModel):
             model_data = model_data.dict()
         assert model
-        assert model._id
-        assert 'id' not in model._doc.keys()
-        assert model._doc.get('_id') == model._id
+        assert model.id
+        assert model._doc.get('id') == model.id
         assert model.username == model_data['username']
         assert model.created == model_data['created']
         assert model.age == model_data['age']
@@ -395,7 +357,7 @@ class TestDBPydanticMixin:
         user = User(**model_data)
         await user.save()
 
-        result = await User.find_one({'id': user.id})
+        result = await User.find_one({'_id': user.id})
         assert result
 
         assert result.id == user.id
@@ -426,7 +388,7 @@ class TestDBPydanticMixin:
         assert saved_models
         for model in saved_models:
             assert isinstance(model, User)
-            assert model._id == model._doc.get('_id')
+            assert model.id == model._doc.get('id')
             assert model.username == model._doc.get('username')
             assert model.created == model._doc.get('created')
             assert model.age == model._doc.get('age')
@@ -445,7 +407,7 @@ class TestDBPydanticMixin:
 
         for document in result:
             assert isinstance(document, User)
-            assert document.id == document._doc.get('_id')
+            assert ObjectId(document.id) == document._doc.get('id')
             assert document.username == document._doc.get('username')
             assert document.created == document._doc.get('created')
             assert document.age == document._doc.get('age')
@@ -489,9 +451,9 @@ class TestDBPydanticMixin:
         assert updated_model.age == old_updated_model.age
         assert updated_model.created == old_updated_model.created
 
-        # Without model._id
-        user._id = None
-        raise_msg = 'Not found _id in current model instance'
+        # Without model.id
+        user.id = None
+        raise_msg = 'Not found id in current model instance'
         with pytest.raises(ValueError, match=raise_msg):
             await user.reload()
 
@@ -507,7 +469,7 @@ class TestDBPydanticMixin:
         # Change document in db without model
         collection = await user.get_collection()
         new_user = await collection.find_one_and_update(
-            {'_id': user._id},
+            {'_id': user.id},
             {'$set': {'username': 'new_username'}},
             return_document=ReturnDocument.AFTER,
         )
@@ -518,9 +480,9 @@ class TestDBPydanticMixin:
         assert reloaded_model == user
         assert reloaded_model.username == new_user['username']
 
-        # Without model._id
-        user._id = None
-        raise_msg = 'Not found _id in current model instance'
+        # Without model.id
+        user.id = None
+        raise_msg = 'Not found id in current model instance'
         with pytest.raises(ValueError, match=raise_msg):
             await user.reload()
 
@@ -536,10 +498,10 @@ class TestDBPydanticMixin:
         await user.delete()
 
         assert not user._doc
-        assert not await user.find_one({'id': user._id})
+        assert not await user.find_one({'_id': user.id})
 
-        # Without model._id
-        user._id = None
-        raise_msg = 'Not found _id in current model instance'
+        # Without model.id
+        user.id = None
+        raise_msg = 'Not found id in current model instance'
         with pytest.raises(ValueError, match=raise_msg):
             await user.reload()

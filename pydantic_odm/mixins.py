@@ -9,6 +9,7 @@ from pymongo.collection import Collection, ReturnDocument
 from typing import TYPE_CHECKING, AbstractSet, Any, Dict, List, Union
 
 from .db import MongoDBManager
+from .decoders.mongodb import AbstractMongoDBDecoder, BaseMongoDBDecoder
 from .encoders.mongodb import AbstractMongoDBEncoder, BaseMongoDBEncoder
 from .types import ObjectIdStr
 
@@ -23,26 +24,33 @@ if TYPE_CHECKING:
 class BaseDBMixin(BaseModel, abc.ABC):
     """Base class for Pydantic mixins"""
 
+    id: ObjectIdStr = None
+
     # Read-only (for public) field for store MongoDB id
-    _id: ObjectIdStr = None
     _doc: Dict = {}
 
-    # Encoders
+    # Encoders and decoders
     _mongodb_encoder: AbstractMongoDBEncoder = BaseMongoDBEncoder()
+    _mongo_decoder: AbstractMongoDBDecoder = BaseMongoDBDecoder()
 
     class Config:
         allow_population_by_field_name = True
-        schema_extra = {'id': 'str'}
 
     def __setattr__(self, key, value):
-        if key not in ['_doc', '_id']:
+        if key not in ['_doc']:
             return super(BaseDBMixin, self).__setattr__(key, value)
         self.__dict__[key] = value
         return value
 
-    @property
-    def id(self) -> ObjectIdStr:
-        return self._id
+    @classmethod
+    def _decode_mongo_documents(cls, document: Dict) -> Dict:
+        """Decode and return MongoDB documents"""
+        return cls._mongo_decoder(document)
+
+    @classmethod
+    def _encode_dict_to_mongo(cls, data: DictStrAny):
+        """Encode any dict to mongo query"""
+        return cls._mongodb_encoder(data)
 
     def _encode_model_to_mongo(
         self,
@@ -62,36 +70,6 @@ class BaseDBMixin(BaseModel, abc.ABC):
         )
         return self._mongodb_encoder(model_as_dict)
 
-    @classmethod
-    def _encode_dict_to_mongo(cls, data: DictStrAny):
-        return cls._mongodb_encoder(data)
-
-    def _update_model_from__doc(self) -> BaseDBMixin:
-        """
-        Update model fields from _doc dictionary
-        (projection of a document from DB)
-        """
-        new_obj = self.parse_obj(self._doc)
-        new_obj._id = self._doc.get('_id')
-        for k, v in new_obj.__dict__.items():
-            self.__dict__[k] = v
-        return new_obj
-
-    @classmethod
-    def _convert_id_in_mongo_query(cls, query: Dict) -> Dict:
-        _query = {}
-        query = cls._encode_dict_to_mongo(query)
-        for k, v in query.items():
-            if k == 'id':
-                _query['_id'] = v
-            elif isinstance(v, dict):
-                _query[k] = cls._convert_id_in_mongo_query(v)
-            elif isinstance(v, (list, tuple)):
-                _query[k] = [cls._convert_id_in_mongo_query(i) for i in v]
-            else:
-                _query[k] = v
-        return _query
-
     def dict(
         self,
         *,
@@ -103,10 +81,11 @@ class BaseDBMixin(BaseModel, abc.ABC):
         exclude_defaults: bool = False,
         exclude_none: bool = False,
     ) -> DictStrAny:
+        # Remove internal fields from serialized result
         if not exclude:
-            exclude = {'_doc', '_id'}
+            exclude = {'_doc'}
         else:
-            exclude.update({'_doc', '_id'})  # noqa
+            exclude.update({'_doc'})  # noqa
 
         d = super(BaseDBMixin, self).dict(
             include=include,
@@ -117,11 +96,19 @@ class BaseDBMixin(BaseModel, abc.ABC):
             exclude_none=exclude_none,
         )
 
-        # Simulating field alias behavior
-        if (not self.id and (exclude_none or exclude_defaults)) or 'id' in exclude:
-            return d
-        d['id'] = self.id
         return d
+
+    def _update_model_from__doc(self) -> BaseDBMixin:
+        """
+        Update model fields from _doc dictionary
+        (projection of a document from DB)
+        """
+        new_obj = self.parse_obj(self._doc)
+        new_obj.id = self._doc.get('id')
+        for k, field in new_obj.__fields__.items():
+            field_default = getattr(field, 'default', None)
+            self.__dict__[k] = getattr(new_obj, k, field_default)
+        return new_obj
 
 
 class DBPydanticMixin(BaseDBMixin):
@@ -162,7 +149,7 @@ class DBPydanticMixin(BaseDBMixin):
         """Return count by query or all documents in collection"""
         if not query:
             query = {}
-        query = cls._convert_id_in_mongo_query(query)
+        query = cls._encode_dict_to_mongo(query)
         collection = await cls.get_collection()
         return await collection.count_documents(query)
 
@@ -170,12 +157,14 @@ class DBPydanticMixin(BaseDBMixin):
     async def find_one(cls, query: Dict) -> DBPydanticMixin:
         """Find and return model from db by pymongo query"""
         collection = await cls.get_collection()
-        query = cls._convert_id_in_mongo_query(query)
+        query = cls._encode_dict_to_mongo(query)
         result = await collection.find_one(query)
         if result:
+            result = cls._decode_mongo_documents(result)
             model = cls.parse_obj(result)
+            id = result.get('id')
             model._doc = result
-            model._id = result['_id']
+            model.id = id
             return model
         return result
 
@@ -188,15 +177,15 @@ class DBPydanticMixin(BaseDBMixin):
         or query cursor
         """
         collection = await cls.get_collection()
-        query = cls._convert_id_in_mongo_query(query)
+        query = cls._encode_dict_to_mongo(query)
         cursor = collection.find(query)
         if return_cursor:
             return cursor
 
         documents = []
         async for _doc in cursor:
+            _doc = cls._decode_mongo_documents(_doc)
             document = cls.parse_obj(_doc)
-            document._id = _doc.get('_id')
             document._doc = _doc
             documents.append(document)
         return documents
@@ -212,7 +201,7 @@ class DBPydanticMixin(BaseDBMixin):
         Find and update documents by query
         """
         collection = await cls.get_collection()
-        query = cls._convert_id_in_mongo_query(query)
+        query = cls._encode_dict_to_mongo(query)
         await collection.update_many(query, fields)
         return await cls.find_many(query, return_cursor)
 
@@ -232,20 +221,19 @@ class DBPydanticMixin(BaseDBMixin):
         inserted_documents = []
         for i, document_id in enumerate(inserted_ids):
             document = cls.parse_obj(documents[i])
-            document._id = document_id
-            document._doc = documents[i]
+            document.id = document_id
+            document._doc = cls._decode_mongo_documents(documents[i])
             inserted_documents.append(document)
         return inserted_documents
 
     async def reload(self) -> DBPydanticMixin:
         """Reload model data from MongoDB (get new document from db)"""
         collection = await self.get_collection()
-        if not self._id:
-            raise ValueError('Not found _id in current model instance')
-        _doc = await collection.find_one({'_id': self._id})
-        _doc.pop('_id')
+        if not self.id:
+            raise ValueError('Not found id in current model instance')
+        _doc = await collection.find_one({'_id': self.id})
         if _doc:
-            self._doc = _doc
+            self._doc = self._decode_mongo_documents(_doc)
             self._update_model_from__doc()
         return self
 
@@ -259,25 +247,25 @@ class DBPydanticMixin(BaseDBMixin):
         if isinstance(fields, BaseModel):
             fields = fields.dict(exclude_unset=True)
         collection = await self.get_collection()
-        if not self._id:
-            raise ValueError('Not found _id in current model instance')
+        if not self.id:
+            raise ValueError('Not found id in current model instance')
         fields = self._encode_dict_to_mongo(fields)
         _doc = await collection.find_one_and_update(
-            {'_id': self._id}, {'$set': fields}, return_document=ReturnDocument.AFTER
+            {'_id': self.id}, {'$set': fields}, return_document=ReturnDocument.AFTER
         )
         if _doc:
-            self._doc.update(_doc)
+            self._doc.update(self._decode_mongo_documents(_doc))
             self._update_model_from__doc()
         return self
 
     async def save(self) -> DBPydanticMixin:
         collection = await self.get_collection()
-        if not self._id:
+        if not self.id:
             data = self._encode_model_to_mongo()
             instance = await collection.insert_one(data)
             if instance:
-                self._id = instance.inserted_id
-                self._doc = {'_id': instance.inserted_id, **self.dict(exclude={'id'})}
+                self.id = instance.inserted_id
+                self._doc = {'id': self.id, **self.dict()}
         else:
             updated = {}
             data = self._encode_model_to_mongo(exclude={'id'})
@@ -286,7 +274,7 @@ class DBPydanticMixin(BaseDBMixin):
                     updated[field] = value
             if updated:
                 instance = await collection.update_one(
-                    {'_id': self._id}, {'$set': updated}
+                    {'_id': self.id}, {'$set': updated}
                 )
                 if instance:
                     self._doc.update(updated)
@@ -295,8 +283,8 @@ class DBPydanticMixin(BaseDBMixin):
     async def delete(self) -> int:
         """Delete document from db"""
         collection = await self.get_collection()
-        if not self._id:
-            raise ValueError('Not found _id in current model instance')
-        result = await collection.delete_one({'_id': self._id})
+        if not self.id:
+            raise ValueError('Not found id in current model instance')
+        result = await collection.delete_one({'_id': self.id})
         self._doc = {}
         return result.deleted_count
