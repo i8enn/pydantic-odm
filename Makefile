@@ -47,7 +47,7 @@ test:
 
 .PHONY: testwatch
 testwatch: testwatch
-	pytest --cov=pydantic_odm -fsvv --ff --color=yes ${args}
+	pytest -fsvv --ff --color=yes ${args}
 
 .PHONY: testcov
 testcov: test
