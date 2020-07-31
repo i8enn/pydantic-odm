@@ -16,7 +16,7 @@ class UserTypesEnum(Enum):
     Reader = 'reader'
 
 
-class TestAbstractMongoDBEncoder:
+class AbstractMongoDBEncoderTestCase:
     async def test_abstract_cls(self):
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
             mongodb_encoders.AbstractMongoDBEncoder()
@@ -26,14 +26,25 @@ class TestAbstractMongoDBEncoder:
         assert getattr(encoder.__call__, '__isabstractmethod__') is True
 
 
-class TestEnumEncode:
+class EncodeEnumTestCase:
     @pytest.mark.parametrize(
         'data, expected',
         [
             pytest.param(
                 {'username': 'test', 'type': UserTypesEnum.Admin},
                 {'username': 'test', 'type': UserTypesEnum.Admin.value},
-                id='simple',
+                id='simple_dict',
+            ),
+            pytest.param(
+                [
+                    {'username': 'test', 'type': UserTypesEnum.Admin},
+                    {'username': 'test', 'type': UserTypesEnum.Manager},
+                ],
+                [
+                    {'username': 'test', 'type': UserTypesEnum.Admin.value},
+                    {'username': 'test', 'type': UserTypesEnum.Manager.value},
+                ],
+                id='simple_list',
             ),
             pytest.param(
                 {
@@ -69,7 +80,7 @@ class TestEnumEncode:
         assert mongodb_encoders._convert_enums(data) == expected
 
 
-class TestBaseMongoDBEncoder:
+class BaseMongoDBEncoderTestCase:
     @pytest.mark.parametrize(
         'data, expected',
         [

@@ -1,22 +1,29 @@
 """Types for pydantic models"""
+from __future__ import annotations
+
 from bson import ObjectId
 from bson.errors import InvalidId
 from datetime import datetime
 from pydantic import BaseModel
-from typing import Dict, List, Union
+from typing import TYPE_CHECKING, Any, Callable, Generator, List, Union
 
 from .errors import DatetimeBorderCrossing
+
+if TYPE_CHECKING:
+    from pydantic.typing import DictStrAny
+
+    ValidatorClsMethod = Callable[[Any], Any]
 
 
 class ObjectIdStr(str):
     """Field for validate string like ObjectId"""
 
     @classmethod
-    def __get_validators__(cls):
+    def __get_validators__(cls) -> Generator['ValidatorClsMethod', None, None]:
         yield cls.validate
 
     @classmethod
-    def validate(cls, v):
+    def validate(cls, v: Union[ObjectId, str]) -> str:
         if isinstance(v, ObjectId):
             return str(v)
         else:
@@ -35,15 +42,15 @@ class DateTimeRange(BaseModel):
     Second elem - upper bound.
     """
 
-    gte: datetime = None
-    lte: datetime = None
+    gte: datetime
+    lte: datetime
 
     @classmethod
-    def __get_validators__(cls):
+    def __get_validators__(cls) -> Generator['ValidatorClsMethod', None, None]:
         yield cls.validate
 
     @classmethod
-    def validate(cls, v: Union[List, Dict], values=None):
+    def validate(cls, v: Union[List[Any], 'DictStrAny']) -> DateTimeRange:
         """Check border crossing"""
         gte, lte = None, None
         try:

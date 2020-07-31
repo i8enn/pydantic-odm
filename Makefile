@@ -28,6 +28,7 @@ format:
 .PHONY: lint
 lint:
 	flake8 pydantic_odm/ tests/
+	mypy pydantic_odm
 	$(isort) --check-only
 	$(black) --check
 
@@ -37,13 +38,9 @@ check-dist:
 	python setup.py sdist
 	twine check dist/*
 
-.PHONY: mypy
-mypy:
-	mypy pydantic_odm
-
 .PHONY: test
 test:
-	pytest --cov=pydantic_odm
+	pytest --cov=pydantic_odm --cov-config=setup.cfg --no-cov-on-fail
 
 .PHONY: testwatch
 testwatch: testwatch
@@ -51,16 +48,16 @@ testwatch: testwatch
 
 .PHONY: testcov
 testcov: test
-	@echo "building coverage html"
+	echo "run tests and building coverage html report"
 	@coverage html
 
-.PHONY: testcov-compile
-testcov-compile: build-cython-trace test
-	@echo "building coverage html"
-	@coverage html
+.PHONY: testcov-report
+testcov-report:
+	echo "building coverage html report"
+	@coverage html -i
 
 .PHONY: all
-all: testcov lint mypy
+all: testcov lint
 
 .PHONY: clean
 clean:

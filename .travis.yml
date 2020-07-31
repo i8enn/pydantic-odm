@@ -9,14 +9,12 @@ install:
 script:
 - make test
 - make lint
-- make mypy
-- make check-dist
 after_success:
 - ls -lha
 - bash <(curl -s https://codecov.io/bash)
 stages:
 - name: test
-  if: type = pull_request OR branch = master OR tag IS present
+  if: type = pull_request OR push
 - name: build
   if: type = push AND (branch = master OR tag IS present)
 jobs:
@@ -27,7 +25,7 @@ jobs:
     before_script:
     - docker-compose up -d
     script:
-    - make test
+    - make
     after_script:
     - docker-compose down
   - stage: build
@@ -45,6 +43,7 @@ jobs:
     - make clean
     script:
     - python setup.py sdist bdist_wheel
+    - make check-dist
     after_success:
     - ls -lha dist
     deploy:
