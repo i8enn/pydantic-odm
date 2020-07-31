@@ -14,7 +14,7 @@ after_success:
 - bash <(curl -s https://codecov.io/bash)
 stages:
 - name: test
-  if: type = pull_request OR branch = master OR tag IS present
+  if: type = pull_request OR push
 - name: build
   if: type = push AND (branch = master OR tag IS present)
 jobs:
