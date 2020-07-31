@@ -28,6 +28,7 @@ format:
 .PHONY: lint
 lint:
 	flake8 pydantic_odm/ tests/
+	mypy pydantic_odm
 	$(isort) --check-only
 	$(black) --check
 
@@ -36,10 +37,6 @@ check-dist:
 	python setup.py check -ms
 	python setup.py sdist
 	twine check dist/*
-
-.PHONY: mypy
-mypy:
-	mypy pydantic_odm
 
 .PHONY: test
 test:
@@ -60,7 +57,7 @@ testcov-report:
 	@coverage html -i
 
 .PHONY: all
-all: testcov lint mypy
+all: testcov lint
 
 .PHONY: clean
 clean:
