@@ -1,11 +1,36 @@
 """Database connector module"""
 from __future__ import annotations
 
+from asyncio import AbstractEventLoop, get_running_loop
 from motor import motor_asyncio
-from typing import Any, Dict, Type
+from threading import Lock
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
+
+if TYPE_CHECKING:
+    from pydantic.typing import DictStrAny
+
+    DatabaseSettingsType = Dict[str, Dict[str, Any]]
 
 
-class MongoDBManager:
+class MongoDBManagerMeta(type):
+    """MongoDBManager metaclass for implement singleton behavior"""
+
+    # Main mongodb manager instance (for singleton implementation)
+    _instance: Optional[MongoDBManager] = None
+
+    # Lock for thread-save
+    _lock: Lock = Lock()
+
+    def __call__(
+        cls, *args: Tuple[Any], **kwargs: DictStrAny
+    ) -> Optional[MongoDBManager]:
+        with cls._lock:
+            if not cls._instance:
+                cls._instance = super().__call__(*args, **kwargs)
+        return cls._instance
+
+
+class MongoDBManager(metaclass=MongoDBManagerMeta):
     """
     Singleton class for create main interface for working on many Mongo
     database connections from one place.
@@ -17,7 +42,7 @@ class MongoDBManager:
             }
         }
 
-    Very minimal connection configuration (Not recomended)::
+    Very minimal connection configuration (Not recommended)::
 
         'minimal': {}
 
@@ -80,24 +105,38 @@ class MongoDBManager:
     any_collections = MongoDBManager.default.any_collections
     """  # noqa: E501
 
-    settings: Dict[str, Dict[str, Any]] = {}
+    # Event loop for passing to MotorClient
+    _loop: AbstractEventLoop
+
+    # Passed settings
+    settings: DatabaseSettingsType
+    # Created connections
     connections: Dict[str, motor_asyncio.AsyncIOMotorClient] = {}
+    # Configured databases
     databases: Dict[str, motor_asyncio.AsyncIOMotorDatabase] = {}
+    # Init database flag
+    is_init: bool = False
 
-    def __init__(self):
-        raise TypeError('This is singleton object')
+    def __init__(
+        self, database_settings: DatabaseSettingsType, loop: AbstractEventLoop = None
+    ):
+        self.settings = database_settings or {}
+        if not loop:
+            loop = get_running_loop()
+        self._loop = loop
 
-    def __class_getitem__(cls, item):
-        return cls.databases.get(item, None)
+    def __getitem__(self, item: str) -> Optional[motor_asyncio.AsyncIOMotorDatabase]:
+        return self.databases.get(item, None)
 
-    @classmethod
-    async def init_connections(
-        cls, settings: Dict[str, Dict[str, Any]]
-    ) -> Type[MongoDBManager]:
+    async def init_connections(self) -> MongoDBManager:
         """Create connections to Mongo databases"""
-        cls.settings = settings
+        if self.is_init:
+            return self
 
-        for alias, configuration in cls.settings.items():
+        if not self.settings:
+            raise RuntimeError('Not found database configurations in MongoDBManager')
+
+        for alias, configuration in self.settings.items():
             connection_params = {
                 'username': configuration.get('USERNAME'),
                 'password': configuration.get('PASSWORD'),
@@ -108,9 +147,18 @@ class MongoDBManager:
             auth_mech = configuration.get('AUTH_MECHANISM')
             if auth_mech:
                 connection_params['authMechanism'] = auth_mech
+            connection_params['io_loop'] = self._loop
             client = motor_asyncio.AsyncIOMotorClient(**connection_params)
             db_name = configuration.get('NAME', alias)
-            cls.connections[alias] = client
+            self.connections[alias] = client
             db = client[db_name]
-            cls.databases[alias] = db
-        return cls
+            self.databases[alias] = db
+
+        self.is_init = True
+
+        return self
+
+
+def get_db_manager() -> Optional[MongoDBManager]:
+    """Return initialized singleton mongodb manager"""
+    return MongoDBManager._instance
