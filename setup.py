@@ -35,7 +35,7 @@ setup(
     author_email='gin.voglgorad@gmail.com',
     url='https://github.com/i8enn/pydantic-odm/',
     download_url='',
-    description='Small async ODM for MongoDB based in Motor and Pydantic',
+    description='Small async ODM for MongoDB based on Motor and Pydantic',
     long_description=long_description,
     long_description_content_type="text/markdown",
     license='MIT',

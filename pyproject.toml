@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "pydantic-odm"
 version = "0.2.2"
-description = "Small async ODM for MongoDB based in Motor and Pydantic"
+description = "Small async ODM for MongoDB based on Motor and Pydantic"
 authors = ["Ivan Galin <gin.volgograd@gmail.com>"]
 license = "MIT"
 
