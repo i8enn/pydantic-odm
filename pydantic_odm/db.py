@@ -144,6 +144,8 @@ class MongoDBManager(metaclass=MongoDBManagerMeta):
                 'port': configuration.get('PORT'),
                 'authSource': configuration.get('AUTH_SOURCE', ''),
             }
+            if 'OPTIONAL_PARAMETERS' in configuration:
+                connection_params.update(**configuration['OPTIONAL_PARAMETERS'])
             auth_mech = configuration.get('AUTH_MECHANISM')
             if auth_mech:
                 connection_params['authMechanism'] = auth_mech

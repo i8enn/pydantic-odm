@@ -38,8 +38,12 @@ check-dist:
 	python setup.py sdist
 	twine check dist/*
 
+.PHONY: start-mongo
+start-mongo:
+	docker-compose up -d
+
 .PHONY: test
-test:
+test: start-mongo
 	pytest --cov=pydantic_odm --cov-config=setup.cfg --no-cov-on-fail
 
 .PHONY: testwatch
@@ -76,3 +80,4 @@ clean:
 	rm -rf dist
 	python setup.py clean
 	rm -rf site
+	docker-compose down -v
