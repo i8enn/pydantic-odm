@@ -108,8 +108,7 @@ class InitConnectionWithMongoDBManagerTestCase:
                             'socketTimeoutMS': 100,
                             'connectTimeoutMS': 100,
                             'serverSelectionTimeoutMS': 100,
-
-                        }
+                        },
                     }
                 },
                 id='with_optional_parameters',
