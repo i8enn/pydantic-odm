@@ -79,6 +79,21 @@ class BaseMongoDBDecoderTestCase:
                 },
                 id='nested',
             ),
+            pytest.param(
+                {
+                    '_id': bson.ObjectId('1f19e462fa9c1eab66db23fb'),
+                    'username': 'test',
+                    'full_name': 'Test Object',
+                    'nested': ['A', 'B', 'C']
+                },
+                {
+                    'id': bson.ObjectId('1f19e462fa9c1eab66db23fb'),
+                    'username': 'test',
+                    'full_name': 'Test Object',
+                    'nested': ['A', 'B', 'C']
+                },
+                id='nested simple types',
+            ),
         ],
     )
     async def test_decode_mongodb_document(self, data, expected):
