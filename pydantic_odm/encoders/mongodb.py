@@ -86,4 +86,5 @@ class BaseMongoDBEncoder(AbstractMongoDBEncoder):
 
     def __call__(self, data: "DictStrAny") -> "DictStrAny":
         data = cast("DictStrAny", _convert_enums(data))
+        data = cast("DictStrAny", _convert_decimals(data))
         return data
