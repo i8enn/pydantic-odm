@@ -23,6 +23,7 @@ class AbstractMongoDBEncoder(abc.ABC):
 def _recursive_iterator(
     data: Union["DictStrAny", List[Any]], transform_func
 ) -> Union["DictStrAny", List[Any]]:
+
     # Cast append func type
     append: Callable[[Union[str, int], Any], None]
     # Convert in list

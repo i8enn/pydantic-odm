@@ -12,10 +12,10 @@ pytestmark = pytest.mark.asyncio
 class UserTypesEnum(Enum):
     """Example user enum"""
 
-    Admin = 'admin'
-    Manager = 'manager'
-    Author = 'author'
-    Reader = 'reader'
+    Admin = "admin"
+    Manager = "manager"
+    Author = "author"
+    Reader = "reader"
 
 
 class AbstractMongoDBEncoderTestCase:
@@ -25,56 +25,56 @@ class AbstractMongoDBEncoderTestCase:
 
     async def test_abstract__call__(self):
         encoder = mongodb_encoders.AbstractMongoDBEncoder
-        assert getattr(encoder.__call__, '__isabstractmethod__') is True
+        assert getattr(encoder.__call__, "__isabstractmethod__") is True
 
 
 class EncodeEnumTestCase:
     @pytest.mark.parametrize(
-        'data, expected',
+        "data, expected",
         [
             pytest.param(
-                {'username': 'test', 'type': UserTypesEnum.Admin},
-                {'username': 'test', 'type': UserTypesEnum.Admin.value},
-                id='simple_dict',
+                {"username": "test", "type": UserTypesEnum.Admin},
+                {"username": "test", "type": UserTypesEnum.Admin.value},
+                id="simple_dict",
             ),
             pytest.param(
                 [
-                    {'username': 'test', 'type': UserTypesEnum.Admin},
-                    {'username': 'test', 'type': UserTypesEnum.Manager},
+                    {"username": "test", "type": UserTypesEnum.Admin},
+                    {"username": "test", "type": UserTypesEnum.Manager},
                 ],
                 [
-                    {'username': 'test', 'type': UserTypesEnum.Admin.value},
-                    {'username': 'test', 'type': UserTypesEnum.Manager.value},
+                    {"username": "test", "type": UserTypesEnum.Admin.value},
+                    {"username": "test", "type": UserTypesEnum.Manager.value},
                 ],
-                id='simple_list',
+                id="simple_list",
             ),
             pytest.param(
                 {
-                    'title': 'test',
-                    'author': {'username': 'test', 'type': UserTypesEnum.Admin},
+                    "title": "test",
+                    "author": {"username": "test", "type": UserTypesEnum.Admin},
                 },
                 {
-                    'title': 'test',
-                    'author': {'username': 'test', 'type': UserTypesEnum.Admin.value},
+                    "title": "test",
+                    "author": {"username": "test", "type": UserTypesEnum.Admin.value},
                 },
-                id='nested',
+                id="nested",
             ),
             pytest.param(
                 {
-                    'title': 'test',
-                    'contributors': [
-                        {'username': 'test', 'type': UserTypesEnum.Admin},
-                        {'username': 'test', 'type': UserTypesEnum.Manager.value},
+                    "title": "test",
+                    "contributors": [
+                        {"username": "test", "type": UserTypesEnum.Admin},
+                        {"username": "test", "type": UserTypesEnum.Manager.value},
                     ],
                 },
                 {
-                    'title': 'test',
-                    'contributors': [
-                        {'username': 'test', 'type': UserTypesEnum.Admin.value},
-                        {'username': 'test', 'type': UserTypesEnum.Manager.value},
+                    "title": "test",
+                    "contributors": [
+                        {"username": "test", "type": UserTypesEnum.Admin.value},
+                        {"username": "test", "type": UserTypesEnum.Manager.value},
                     ],
                 },
-                id='list_in_nested',
+                id="list_in_nested",
             ),
         ],
     )
@@ -84,31 +84,31 @@ class EncodeEnumTestCase:
 
 class BaseMongoDBEncoderTestCase:
     @pytest.mark.parametrize(
-        'data, expected',
+        "data, expected",
         [
             pytest.param(
-                {'username': 'test', 'type': UserTypesEnum.Admin},
-                {'username': 'test', 'type': UserTypesEnum.Admin.value},
-                id='simple',
+                {"username": "test", "type": UserTypesEnum.Admin},
+                {"username": "test", "type": UserTypesEnum.Admin.value},
+                id="simple",
             ),
             pytest.param(
                 {
-                    'title': 'test',
-                    'author': {'username': 'test', 'type': UserTypesEnum.Admin},
-                    'contributors': [
-                        {'username': 'test', 'type': UserTypesEnum.Manager},
-                        {'username': 'test', 'type': UserTypesEnum.Reader},
+                    "title": "test",
+                    "author": {"username": "test", "type": UserTypesEnum.Admin},
+                    "contributors": [
+                        {"username": "test", "type": UserTypesEnum.Manager},
+                        {"username": "test", "type": UserTypesEnum.Reader},
                     ],
                 },
                 {
-                    'title': 'test',
-                    'author': {'username': 'test', 'type': UserTypesEnum.Admin.value},
-                    'contributors': [
-                        {'username': 'test', 'type': UserTypesEnum.Manager.value},
-                        {'username': 'test', 'type': UserTypesEnum.Reader.value},
+                    "title": "test",
+                    "author": {"username": "test", "type": UserTypesEnum.Admin.value},
+                    "contributors": [
+                        {"username": "test", "type": UserTypesEnum.Manager.value},
+                        {"username": "test", "type": UserTypesEnum.Reader.value},
                     ],
                 },
-                id='nested',
+                id="nested",
             ),
         ],
     )

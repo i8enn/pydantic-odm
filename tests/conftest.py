@@ -7,10 +7,10 @@ from pydantic_odm.db import MongoDBManager
 pytestmark = pytest.mark.asyncio
 
 
-DATABASE_SETTING = {'default': {'NAME': 'test_mongo', 'PORT': 37017}}
+DATABASE_SETTING = {"default": {"NAME": "test_mongo", "PORT": 37017}}
 
 
-@pytest.yield_fixture(scope='session')
+@pytest.yield_fixture(scope="session")
 def event_loop():
     loop = get_event_loop_policy().new_event_loop()
     yield loop
