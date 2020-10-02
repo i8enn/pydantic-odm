@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 import abc
+from bson.decimal128 import Decimal128
+from decimal import Decimal
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Callable, List, Union, cast
-from decimal import Decimal
-from bson.decimal128 import Decimal128
 
 if TYPE_CHECKING:
     from pydantic.typing import DictStrAny
