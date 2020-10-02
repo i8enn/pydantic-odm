@@ -12,7 +12,7 @@ class AbstractMongoDBDecoder(abc.ABC):
     """Abstract MongoDB decoder"""
 
     @abc.abstractmethod
-    def __call__(self, data: 'DictStrAny') -> 'DictStrAny':
+    def __call__(self, data: "DictStrAny") -> "DictStrAny":
         """Main mongodb encoder func"""
         raise NotImplementedError()
 
@@ -20,16 +20,16 @@ class AbstractMongoDBDecoder(abc.ABC):
 class BaseMongoDBDecoder(AbstractMongoDBDecoder):
     """Base MongoDB decoder"""
 
-    def __call__(self, data: 'DictStrAny') -> 'DictStrAny':
+    def __call__(self, data: "DictStrAny") -> "DictStrAny":
         """
         Decode mongodb document.
 
         Rename field `_id` to `id`.
         """
         data = data.copy()
-        data.pop('id', None)
-        document_id = data.pop('_id', None)
-        decoded_data = {'id': document_id}
+        data.pop("id", None)
+        document_id = data.pop("_id", None)
+        decoded_data = {"id": document_id}
         for k, v in data.items():
             if isinstance(v, list):
                 v_list = []

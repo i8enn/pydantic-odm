@@ -134,22 +134,22 @@ class MongoDBManager(metaclass=MongoDBManagerMeta):
             return self
 
         if not self.settings:
-            raise RuntimeError('Not found database configurations in MongoDBManager')
+            raise RuntimeError("Not found database configurations in MongoDBManager")
 
         for alias, configuration in self.settings.items():
             connection_params = {
-                'username': configuration.get('USERNAME'),
-                'password': configuration.get('PASSWORD'),
-                'host': configuration.get('HOST'),
-                'port': configuration.get('PORT'),
-                'authSource': configuration.get('AUTH_SOURCE', ''),
+                "username": configuration.get("USERNAME"),
+                "password": configuration.get("PASSWORD"),
+                "host": configuration.get("HOST"),
+                "port": configuration.get("PORT"),
+                "authSource": configuration.get("AUTH_SOURCE", ""),
             }
-            auth_mech = configuration.get('AUTH_MECHANISM')
+            auth_mech = configuration.get("AUTH_MECHANISM")
             if auth_mech:
-                connection_params['authMechanism'] = auth_mech
-            connection_params['io_loop'] = self._loop
+                connection_params["authMechanism"] = auth_mech
+            connection_params["io_loop"] = self._loop
             client = motor_asyncio.AsyncIOMotorClient(**connection_params)
-            db_name = configuration.get('NAME', alias)
+            db_name = configuration.get("NAME", alias)
             self.connections[alias] = client
             db = client[db_name]
             self.databases[alias] = db
