@@ -32,8 +32,8 @@ class TestObjectIdStr:
     async def test_validator(self):
         # Invalid ObjectID str
         model = SchemeForTestObjectIdStr
-        uid = 'saidfojdsioafjaosidfj'
-        raise_msg = 'Not a valid ObjectId'
+        uid = "saidfojdsioafjaosidfj"
+        raise_msg = "Not a valid ObjectId"
         with pytest.raises(ValidationError, match=raise_msg):
             model(uid=uid)
 
@@ -71,13 +71,13 @@ class TestDateTimeRange:
         # gte > lte
         gte = datetime.now() + timedelta(milliseconds=1)
         lte = datetime.now()
-        raise_msg = 'Make sure the borders do not cross'
+        raise_msg = "Make sure the borders do not cross"
         with pytest.raises(ValidationError, match=raise_msg):
             model(created=[gte, lte])
 
         # lte < gte
         gte = datetime.now()
         lte = datetime.now() - timedelta(milliseconds=1)
-        raise_msg = 'Make sure the borders do not cross'
+        raise_msg = "Make sure the borders do not cross"
         with pytest.raises(ValidationError, match=raise_msg):
             model(created=[gte, lte])
