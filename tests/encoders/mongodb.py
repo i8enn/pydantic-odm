@@ -3,6 +3,8 @@ import pytest
 from enum import Enum
 
 from pydantic_odm.encoders import mongodb as mongodb_encoders
+from decimal import Decimal
+from bson.decimal128 import Decimal128
 
 pytestmark = pytest.mark.asyncio
 
