@@ -34,7 +34,9 @@ class BaseMongoDBDecoder(AbstractMongoDBDecoder):
             if isinstance(v, list):
                 v_list = []
                 for item in v:
-                    v_list.append(self.__call__(item) if isinstance(item, dict) else item)
+                    if isinstance(item, dict):
+                        item = self.__call__(item)
+                    v_list.append(item)
                 decoded_data[k] = v_list
             elif isinstance(v, dict):
                 decoded_data[k] = self.__call__(v)
