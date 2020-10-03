@@ -11,19 +11,19 @@ from .conftest import DATABASE_SETTING
 pytestmark = pytest.mark.asyncio
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def reload_db_module():
     importlib.reload(db)  # noqa
 
 
-@pytest.mark.usefixtures('reload_db_module')
+@pytest.mark.usefixtures("reload_db_module")
 class CreateMongoDBManagerInstanceTestCase:
     async def test_create_instance_with_settings(self):
         dbm = await db.MongoDBManager(DATABASE_SETTING).init_connections()
 
         assert dbm._instance == dbm
         assert dbm.is_init is True
-        assert dbm.connections['default']
+        assert dbm.connections["default"]
         # Check use current loop if not passed specify loop
         assert dbm._loop == get_running_loop()
 
@@ -38,7 +38,7 @@ class CreateMongoDBManagerInstanceTestCase:
             assert connection.io_loop == custom_event_loop
 
     async def test_create_instance_with_empty_database_settings(self):
-        msg = 'Not found database configurations in MongoDBManager'
+        msg = "Not found database configurations in MongoDBManager"
         with pytest.raises(RuntimeError, match=msg):
             await db.MongoDBManager({}).init_connections()
 
@@ -51,7 +51,7 @@ class CreateMongoDBManagerInstanceTestCase:
         assert dbm_clone == dbm
         assert dbm_clone._instance == dbm
         # Third instance after one more import
-        re_imported_db = importlib.import_module('pydantic_odm.db', 'pydantic_odm')
+        re_imported_db = importlib.import_module("pydantic_odm.db", "pydantic_odm")
         after_import = re_imported_db.MongoDBManager(  # noqa
             DATABASE_SETTING, event_loop
         )
@@ -74,25 +74,25 @@ class CreateMongoDBManagerInstanceTestCase:
             assert id(dbm1) == id(dbm2)
 
 
-@pytest.mark.usefixtures('reload_db_module')
+@pytest.mark.usefixtures("reload_db_module")
 class InitConnectionWithMongoDBManagerTestCase:
     @pytest.mark.parametrize(
-        'settings',
+        "settings",
         [
-            pytest.param(DATABASE_SETTING, id='simple'),
+            pytest.param(DATABASE_SETTING, id="simple"),
             pytest.param(
                 {
-                    'default': {
-                        'NAME': 'test_mongo',
-                        'PORT': 37017,
-                        'USERNAME': 'local',
-                        'PASSWORD': 'local_pass',
-                        'HOST': 'localhost',
-                        'AUTH_SOURCE': 'admin',
-                        'AUTH_MECHANISM': 'SCRAM-SHA-256',
+                    "default": {
+                        "NAME": "test_mongo",
+                        "PORT": 37017,
+                        "USERNAME": "local",
+                        "PASSWORD": "local_pass",
+                        "HOST": "localhost",
+                        "AUTH_SOURCE": "admin",
+                        "AUTH_MECHANISM": "SCRAM-SHA-256",
                     }
                 },
-                id='full',
+                id="full",
             ),
             pytest.param(
                 {
@@ -123,23 +123,23 @@ class InitConnectionWithMongoDBManagerTestCase:
         assert len(dbm.databases) == len(settings.keys())
         for db_alias, db_settings in settings.items():
             assert dbm.connections[db_alias]
-            assert dbm.databases[db_alias].name == db_settings.get('NAME', None)
+            assert dbm.databases[db_alias].name == db_settings.get("NAME", None)
 
     async def test_init_connection_with_empty_conf(self, event_loop):
-        dbm = await db.MongoDBManager({'minimal': {}}, event_loop).init_connections()
+        dbm = await db.MongoDBManager({"minimal": {}}, event_loop).init_connections()
         assert isinstance(dbm, db.MongoDBManager)
         assert len(dbm.connections) == 1
-        assert dbm.connections['minimal']
+        assert dbm.connections["minimal"]
         assert len(dbm.databases) == 1
-        assert dbm.databases['minimal'].name == 'minimal'
+        assert dbm.databases["minimal"].name == "minimal"
 
     async def test_get_db_with_getattr(self, event_loop):
         dbm = await db.MongoDBManager(DATABASE_SETTING, event_loop).init_connections()
-        database = dbm.databases['default']
-        assert dbm['default'] == database
+        database = dbm.databases["default"]
+        assert dbm["default"] == database
 
 
-@pytest.mark.usefixtures('reload_db_module')
+@pytest.mark.usefixtures("reload_db_module")
 class GetCurrentDBManagerInstanceTestCase:
     async def test_get_db_manager(self, event_loop):
         dbm = await db.MongoDBManager(DATABASE_SETTING, event_loop).init_connections()

@@ -19,7 +19,7 @@ class ObjectIdStr(str):
     """Field for validate string like ObjectId"""
 
     @classmethod
-    def __get_validators__(cls) -> Generator['ValidatorClsMethod', None, None]:
+    def __get_validators__(cls) -> Generator["ValidatorClsMethod", None, None]:
         yield cls.validate
 
     @classmethod
@@ -30,7 +30,7 @@ class ObjectIdStr(str):
             try:
                 ObjectId(str(v))
             except InvalidId:
-                raise ValueError('Not a valid ObjectId')
+                raise ValueError("Not a valid ObjectId")
             return v
 
 
@@ -46,19 +46,19 @@ class DateTimeRange(BaseModel):
     lte: datetime
 
     @classmethod
-    def __get_validators__(cls) -> Generator['ValidatorClsMethod', None, None]:
+    def __get_validators__(cls) -> Generator["ValidatorClsMethod", None, None]:
         yield cls.validate
 
     @classmethod
-    def validate(cls, v: Union[List[Any], 'DictStrAny']) -> DateTimeRange:
+    def validate(cls, v: Union[List[Any], "DictStrAny"]) -> DateTimeRange:
         """Check border crossing"""
         gte, lte = None, None
         try:
             if isinstance(v, list):
                 gte, lte = v
             elif isinstance(v, dict):
-                gte = v.get('gte')
-                lte = v.get('lte')
+                gte = v.get("gte")
+                lte = v.get("lte")
         except IndexError:
             return cls(gte=gte, lte=lte)
 

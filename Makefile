@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := all
 isort = isort pydantic_odm tests
-black = black -S -l 88 --target-version py37 pydantic_odm tests
+black = black -l 88 pydantic_odm tests
 
 # Makefile target args
 args = $(filter-out $@,$(MAKECMDGOALS))

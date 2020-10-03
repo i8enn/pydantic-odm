@@ -27,5 +27,8 @@ ipdb = "^0.13.3"
 devtools = "^0.5.1"
 
 [build-system]
-requires = ["poetry>=1.0"]
+requires = [
+    "poetry>=1.0",
+    "setuptools!=50.0",
+]
 build-backend = "poetry.masonry.api"
