@@ -21,7 +21,7 @@ class AbstractMongoDBEncoder(abc.ABC):
 
 
 def _recursive_iterator(
-    data: Union["DictStrAny", List[Any]], transform_func
+    data: Union["DictStrAny", List[Any]], transform_func: Callable[[Any], Any]
 ) -> Union["DictStrAny", List[Any]]:
 
     # Cast append func type
@@ -39,7 +39,7 @@ def _recursive_iterator(
         append = lambda k, v: _data.update({k: v})  # noqa: E731
     # Iterate passed data
     for key, value in iterator:
-        # Replace enum object to enum value
+        # Convert and replace value with transform function
         value = transform_func(value)
         # Recursive call if find sequence
         if isinstance(value, (list, dict)):
@@ -59,12 +59,12 @@ def _convert_enums(
     Note: May be this solution not good
     """
 
-    def transform(value):
+    def enum_to_value(value: Union[Any, Enum]) -> Any:
         if isinstance(value, Enum):
             value = value.value
         return value
 
-    return _recursive_iterator(data, transform)
+    return _recursive_iterator(data, enum_to_value)
 
 
 def _convert_decimals(
@@ -74,12 +74,14 @@ def _convert_decimals(
     Convert decimal.Decimal to bson.decimal128.Decimal128
     """
 
-    def transform(value):
+    def python_decimal_to_bson_decimal(
+        value: Union[Any, Decimal]
+    ) -> Union[Any, Decimal128]:
         if isinstance(value, Decimal):
             value = Decimal128(value)
         return value
 
-    return _recursive_iterator(data, transform)
+    return _recursive_iterator(data, python_decimal_to_bson_decimal)
 
 
 class BaseMongoDBEncoder(AbstractMongoDBEncoder):
