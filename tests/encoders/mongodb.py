@@ -92,23 +92,23 @@ class EncodeDecimalsTestCase:
                 id="simple_dict",
             ),
             pytest.param(
-                [{"money_amount": Decimal("13.37")},],
-                [{"money_amount": Decimal128("13.37")},],
+                [{"money_amount": Decimal("13.37")}],
+                [{"money_amount": Decimal128("13.37")}],
                 id="simple_list",
             ),
             pytest.param(
-                {"author": {"money_amount": Decimal("13.37")},},
-                {"author": {"money_amount": Decimal128("13.37")},},
+                {"author": {"money_amount": Decimal("13.37")}},
+                {"author": {"money_amount": Decimal128("13.37")}},
                 id="nested",
             ),
             pytest.param(
                 {
                     "title": "test",
-                    "contributors": [{"money_amount": Decimal("13.37")},],
+                    "contributors": [{"money_amount": Decimal("13.37")}],
                 },
                 {
                     "title": "test",
-                    "contributors": [{"money_amount": Decimal128("13.37")},],
+                    "contributors": [{"money_amount": Decimal128("13.37")}],
                 },
                 id="list_in_nested",
             ),
