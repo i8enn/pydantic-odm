@@ -96,22 +96,22 @@ class InitConnectionWithMongoDBManagerTestCase:
             ),
             pytest.param(
                 {
-                    'default': {
-                        'NAME': 'test_mongo',
-                        'PORT': 37017,
-                        'USERNAME': 'local',
-                        'PASSWORD': 'local_pass',
-                        'HOST': 'localhost',
-                        'AUTH_SOURCE': 'admin',
-                        'AUTH_MECHANISM': 'SCRAM-SHA-256',
-                        'OPTIONAL_PARAMETERS': {
-                            'socketTimeoutMS': 100,
-                            'connectTimeoutMS': 100,
-                            'serverSelectionTimeoutMS': 100,
+                    "default": {
+                        "NAME": "test_mongo",
+                        "PORT": 37017,
+                        "USERNAME": "local",
+                        "PASSWORD": "local_pass",
+                        "HOST": "localhost",
+                        "AUTH_SOURCE": "admin",
+                        "AUTH_MECHANISM": "SCRAM-SHA-256",
+                        "OPTIONAL_PARAMETERS": {
+                            "socketTimeoutMS": 100,
+                            "connectTimeoutMS": 100,
+                            "serverSelectionTimeoutMS": 100,
                         },
                     }
                 },
-                id='with_optional_parameters',
+                id="with_optional_parameters",
             ),
         ],
     )
