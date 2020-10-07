@@ -1,3 +1,12 @@
+## 0.2.3 (07.10.2020)
+
+- Summary grammar fix. PR #28 by @languitar
+- Skip setuptools 50.0 because of a pip/setuptools related issue. PR #32 by @dhensen
+- Fix project formatters. PR #33 by @i8enn
+- Fix BaseMongoDBDecoder for documents with arrays of simple type. PR #30 by @antipooh
+- Add MongoDB encoder: Decimal to Decimal128. PR #31 by @dhensen
+- Add passing in optional parameters of AsyncIOMotorClient. PR #29 by @dhensen
+
 ## 0.2.2 (24.07.2020)
 
 - Fix missing nested packages in build by @i8enn
