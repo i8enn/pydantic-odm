@@ -38,12 +38,20 @@ check-dist:
 	python setup.py sdist
 	twine check dist/*
 
+.PHONY: up-services
+up-services:
+	docker-compose up -d
+
+.PHONY: down-services
+down-services:
+	docker-compose down -v
+
 .PHONY: test
-test:
+test: up-services
 	pytest --cov=pydantic_odm --cov-config=setup.cfg --no-cov-on-fail
 
 .PHONY: testwatch
-testwatch: testwatch
+testwatch: up-services
 	pytest -fsvv --ff --color=yes ${args}
 
 .PHONY: testcov
@@ -60,7 +68,7 @@ testcov-report:
 all: testcov lint
 
 .PHONY: clean
-clean:
+clean: down-services
 	rm -rf `find . -name __pycache__`
 	rm -f `find . -type f -name '*.py[co]' `
 	rm -f `find . -type f -name '*~' `
