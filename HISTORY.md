@@ -1,7 +1,19 @@
-## 0.2 (unreleased)
+## 0.2.2 (24.07.2020)
+
+- Fix missing nested packages in build by @i8enn
+
+## 0.2.1 (24.07.2020)
+
+- Created MongoDB encoders for encode queries or model to MongoDB driver. PR #24 by @i8enn
+- Fix creating empty `id` field in models. Fix issue #23. PR #25 by @i8enn
+- Created MongoDB decoders. PR #25 by @i8enn
+- Changed pytest and coverage configuration. PR #25 by @i8enn
+
+## 0.2 (21.07.2020)
 
 * Implemented `id` public property for `PydanticDBMixin`. Updated *db mixins* and their tests. PR #17 by @i8enn
-
+* Implemented Enum support. PR #20 by @i8enn 
+* Replaces package manager from Pipenv to Poetry. PR #21 by @i8enn 
 
 ## 0.1.6 (20.01.2020)
 
