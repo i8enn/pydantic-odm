@@ -506,12 +506,14 @@ class DBPydanticMixinTestCase:
         with pytest.raises(ValueError, match=raise_msg):
             await user.reload()
 
-    async def test_bug_serialize_to_json_when_model_is_deeply_nested(self, init_test_db):
-        """Failing testcase:
-        When you have a BaseDBMixin container model with children that are
+    async def test_bug_serialize_to_json_when_model_is_deeply_nested(
+        self, init_test_db
+    ):
+        """When you have a BaseDBMixin container model with children that are
         DBPydanticMixin, serializing to json fails after the child objects are saved.
         (eg. then now have an ObjectId)
         """
+
         class FooThing(mixins.DBPydanticMixin):
             name: str
 
@@ -532,3 +534,15 @@ class DBPydanticMixinTestCase:
 
         container_2 = SomeContainer(many_things=container.many_things)
         container_2.json()
+
+    async def test_basedbmixin_can_be_serialized_to_json_when_child_has_objectid(self,):
+        class BarThing(mixins.DBPydanticMixin):
+            name: str
+
+        class AnotherContainer(mixins.BaseDBMixin):
+            many_things: List[BarThing]
+
+        bar = BarThing(name="haha")
+        bar.id = ObjectId()  # you would never set an id. having this is another issue
+        container = AnotherContainer(many_things=[bar])
+        container.json()
