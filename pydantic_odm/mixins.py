@@ -32,6 +32,7 @@ class BaseDBMixin(BaseModel, abc.ABC):
 
     class Config:
         allow_population_by_field_name = True
+        json_encoders: "DictAny" = {ObjectId: lambda v: ObjectIdStr(v)}
 
     def __setattr__(self, key: Any, value: Any) -> Any:
         if key not in ["_doc"]:
@@ -109,11 +110,10 @@ class BaseDBMixin(BaseModel, abc.ABC):
 class DBPydanticMixin(BaseDBMixin):
     """Help class for communicate of Pydantic model and MongoDB"""
 
-    class Config:
+    class Config(BaseDBMixin.Config):
         # DB
         collection: Optional[str] = None
         database: Optional[str] = None
-        json_encoders: "DictAny" = {ObjectId: lambda v: ObjectIdStr(v)}
 
     @classmethod
     async def get_collection(cls) -> Collection:
