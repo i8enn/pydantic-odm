@@ -505,3 +505,30 @@ class DBPydanticMixinTestCase:
         raise_msg = "Not found id in current model instance"
         with pytest.raises(ValueError, match=raise_msg):
             await user.reload()
+
+    async def test_bug_serialize_to_json_when_model_is_deeply_nested(self, init_test_db):
+        """Failing testcase:
+        When you have a BaseDBMixin container model with children that are
+        DBPydanticMixin, serializing to json fails after the child objects are saved.
+        (eg. then now have an ObjectId)
+        """
+        class FooThing(mixins.DBPydanticMixin):
+            name: str
+
+            class Config:
+                database = "default"
+                collection = "test_post"
+
+        class SomeContainer(mixins.BaseDBMixin):
+            many_things: List[FooThing]
+
+        container = SomeContainer(
+            many_things=[FooThing(name="neo"), FooThing(name="morpheus")]
+        )
+        container.json()
+
+        for thing in container.many_things:
+            await thing.save()
+
+        container_2 = SomeContainer(many_things=container.many_things)
+        container_2.json()
