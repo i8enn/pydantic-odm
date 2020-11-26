@@ -110,7 +110,7 @@ class BaseDBMixin(BaseModel, abc.ABC):
 class DBPydanticMixin(BaseDBMixin):
     """Help class for communicate of Pydantic model and MongoDB"""
 
-    class Config(BaseDBMixin.Config):
+    class Config:
         # DB
         collection: Optional[str] = None
         database: Optional[str] = None
