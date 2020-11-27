@@ -6,12 +6,6 @@ python:
 - '3.8'
 install:
 - POETRY_VIRTUALENVS_CREATE=false POETRY_VERSION=1.0 make install
-script:
-- make test
-- make lint
-after_success:
-- ls -lha
-- bash <(curl -s https://codecov.io/bash)
 stages:
 - name: test
   if: type = pull_request OR push
@@ -27,6 +21,7 @@ jobs:
     script:
     - make
     after_script:
+    - bash <(curl -s https://codecov.io/bash)
     - docker-compose down
   - stage: build
     name: PyPI Build and Upload
