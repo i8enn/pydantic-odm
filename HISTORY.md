@@ -1,3 +1,7 @@
+## 0.2.4 (27.11.2020)
+
+- Bugfix: serializing to json on a BaseDBMixin with child DBPydanticMixin's fails. PR #34 by @dhensen
+
 ## 0.2.3 (07.10.2020)
 
 - Summary grammar fix. PR #28 by @languitar
