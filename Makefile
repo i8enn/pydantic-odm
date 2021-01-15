@@ -48,7 +48,7 @@ down-services:
 
 .PHONY: test
 test: up-services
-	pytest --cov-config=setup.cfg --cov-report=term --assert=plain --no-cov-on-fail --cov=pydantic_odm tests/
+	pytest --cov=pydantic_odm --cov-config=setup.cfg --no-cov-on-fail
 
 .PHONY: testwatch
 testwatch: up-services
@@ -57,17 +57,15 @@ testwatch: up-services
 .PHONY: testcov
 testcov: test
 	echo "run tests and building coverage html report"
-	@coverage html --rcfile=setup.cfg
-	@coverage xml --rcfile=setup.cfg
+	@coverage html
 
 .PHONY: testcov-report
 testcov-report:
 	echo "building coverage html report"
-	@coverage html -i --rcfile=setup.cfg
-	@coverage xml -i --rcfile=setup.cfg
+	@coverage html -i
 
 .PHONY: all
-all: test lint
+all: testcov lint
 
 .PHONY: clean
 clean: down-services
@@ -82,7 +80,6 @@ clean: down-services
 	rm -rf *.egg-info
 	rm -f .coverage
 	rm -f .coverage.*
-	rm -f coverage.*
 	rm -rf build
 	rm -rf dist
 	python setup.py clean
