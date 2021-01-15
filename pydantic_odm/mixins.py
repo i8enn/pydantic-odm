@@ -133,6 +133,43 @@ class DBPydanticMixin(BaseDBMixin):
             collection = await db.create_collection(collection_name)
         return collection
 
+    @staticmethod
+    async def pre_save_validation(
+        data: Union["DictAny", List["DictAny"]], many: bool = False
+    ) -> Union["DictAny", List["DictAny"]]:
+        """
+        Async validation before save data to DB
+
+        For use this method - override him in your model.
+        You can also serializing data by returning a modified
+        data dictionary (but I don't recommend).
+
+        "many" flag will inform you about a mass operation.
+
+        Called before:
+            - create (with save)
+            - update
+            - save
+            - bulk create
+            - bulk update
+
+        Usage example:
+
+            class YourModel(DBPydanticMixin):
+                other_model_id: ObjectIdStr
+
+                async def validation(
+                        data: Union["DictAny", List["DictAny"]], many: bool = False
+                ) -> Union["DictAny", List["DictAny"]]:
+                    other_model = await OtherModel.find_one({
+                        '_id': data.get('other_model_id')
+                    })
+                    if not other_model:
+                        raise TypeError(f'Other model with `{id}` id not found')
+                    return data
+        """
+        return data
+
     @classmethod
     async def create(cls, fields: Union["DictAny", BaseModel]) -> DBPydanticMixin:
         """Create document by dict or pydantic model"""
@@ -195,6 +232,7 @@ class DBPydanticMixin(BaseDBMixin):
         """
         Find and update documents by query
         """
+        await cls.pre_save_validation(fields, many=True)
         collection = await cls.get_collection()
         query = cls._encode_dict_to_mongo(query)
         await collection.update_many(query, fields)
@@ -217,6 +255,7 @@ class DBPydanticMixin(BaseDBMixin):
             ]
 
         documents = cast(List["DictAny"], documents)  # noqa: types
+        await cls.pre_save_validation(documents, many=True)
 
         result = await collection.insert_many(documents)
         inserted_ids = result.inserted_ids
@@ -248,6 +287,7 @@ class DBPydanticMixin(BaseDBMixin):
         """
         if isinstance(fields, BaseModel):
             fields = fields.dict(exclude_unset=True)
+        await self.pre_save_validation(fields)
         collection = await self.get_collection()
         if not self.id:
             raise ValueError("Not found id in current model instance")
@@ -264,6 +304,7 @@ class DBPydanticMixin(BaseDBMixin):
         collection = await self.get_collection()
         if not self.id:
             data = self._encode_model_to_mongo()
+            await self.pre_save_validation(data)
             instance = await collection.insert_one(data)
             if instance:
                 self.id = instance.inserted_id
@@ -271,6 +312,7 @@ class DBPydanticMixin(BaseDBMixin):
         else:
             updated = {}
             data = self._encode_model_to_mongo(exclude={"id"})
+            await self.pre_save_validation(data)
             for field, value in data.items():
                 if self._doc.get(field) != value:
                     updated[field] = value
