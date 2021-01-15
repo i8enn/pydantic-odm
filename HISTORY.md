@@ -1,3 +1,7 @@
+## 0.2.5 (15.01.2021)
+
+- Implemented pre-save validation in DBPydanticMixin. PR #36 by @i8enn
+
 ## 0.2.4 (27.11.2020)
 
 - Bugfix: serializing to json on a BaseDBMixin with child DBPydanticMixin's fails. PR #34 by @dhensen
