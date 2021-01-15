@@ -8,6 +8,7 @@ from motor import motor_asyncio
 from pydantic import BaseModel, Field
 from pymongo.collection import ReturnDocument
 from typing import List, Optional
+from unittest import mock
 
 from pydantic_odm import mixins
 
@@ -265,6 +266,42 @@ class DBPydanticMixinTestCase:
         with pytest.raises(ValueError, match=raise_msg):
             _ = await User.get_collection()
         monkeypatch.undo()
+
+    async def test_call_pre_save_validation_method(self, init_test_db):
+        data = {"username": "test", "created": datetime.now()}
+
+        method_path = "pydantic_odm.mixins.DBPydanticMixin.pre_save_validation"
+        with mock.patch(method_path) as mocked:
+            await User.create(data)
+            assert 1 == mocked.call_count
+            assert mocked.call_args[0]
+
+        with mock.patch(method_path) as mocked:
+            await User.bulk_create(
+                [
+                    {"username": f"test #{i}", "created": datetime.now()}
+                    for i in range(1, 3)
+                ]
+            )
+            assert 1 == mocked.call_count
+            assert mocked.call_args[0]
+
+        with mock.patch(method_path) as mocked:
+            await User.update_many({}, {"$set": {"username": "new_user_name"}})
+            assert 1 == mocked.call_count
+            assert mocked.call_args[0]
+
+        user = await User.create(data)
+        with mock.patch(method_path) as mocked:
+            await user.update(data)
+            assert 1 == mocked.call_count
+            assert mocked.call_args[0]
+
+        with mock.patch(method_path) as mocked:
+            user.username = "new_username"
+            await user.save()
+            assert 1 == mocked.call_count
+            assert mocked.call_args[0]
 
     async def test_save_model_with_new_doc(self, init_test_db):
         model_data = {"username": "test", "created": datetime.now(), "age": 10}
